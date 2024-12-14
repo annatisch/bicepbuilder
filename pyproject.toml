@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bicepbuilder"
+readme = "README.md"
+version = "0.0.1"
+license = {text = "MIT License"}
+requires-python = ">= 3.10"
+dependencies = [
+    "marko",
+    "typing_extensions"
+]
+
+[project.scripts]
+bicepbuilder = "bicepbuilder._generator:run"
+
