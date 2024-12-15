@@ -17,7 +17,7 @@ def {module_name}(
         /,
         *,
         params: {resource_name},
-        scope: BicepExpression,
+        scope: Optional[BicepExpression] = None,
         {params}depends_on: Optional[Union[str, BicepExpression]] = None,
         name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '{module_version}',
@@ -27,14 +27,15 @@ def {module_name}(
         description: Optional[str] = None,
 ) -> {resource_name}Bicep:
     symbol = "{module_name}_" + generate_suffix()
-    name = params.get('name', name) or symbol
+    name = name or Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{{description}}')\\n")
     if batch_size:
         bicep.write(f"@batchSize({{batch_size}})\\n")
     bicep.write(f"module {{symbol}} '{{registry_prefix}}/{{path}}:{{tag}}' = {{{{\\n")
     bicep.write(f"  name: {{resolve_value(name)}}\\n")
-    bicep.write(f"  scope: {{resolve_value(scope)}}\\n")
+    if scope is not None:
+        bicep.write(f"  scope: {{resolve_value(scope)}}\\n")
     bicep.write(f"  params: {{{{\\n")
     {bicep_params}
     serialize_dict(bicep, params, indent="    ")
@@ -44,12 +45,9 @@ def {module_name}(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\\n")
     bicep.write(f"}}}}\\n")
-    return {{
-        'symbol': BicepExpression(symbol),
-        'id': ResourceId(symbol),
-        'name': ResourceName(symbol),
-        'outputs': {outputs}
-    }}
+    output = {resource_name}Bicep(symbol)
+    output.outputs = {outputs}
+    return output
 """
 def write_pymodule(
         pymodule: IO[str],
@@ -69,10 +67,13 @@ def write_pymodule(
     pymodule.write("    resolve_key,\n")
     pymodule.write("    serialize_dict,\n")
     pymodule.write("    serialize_list,\n")
+    pymodule.write(")\n")
+    pymodule.write(f"from {relative_import}.expressions import (\n")
     pymodule.write("    BicepExpression,\n")
-    pymodule.write("    ResourceGroup,\n")
+    pymodule.write("    Module,\n")
     pymodule.write("    ResourceId,\n")
     pymodule.write("    ResourceName,\n")
+    pymodule.write("    Deployment,\n")
     pymodule.write("    Output,\n")
     pymodule.write(")\n\n")
     if resource.imports:
@@ -90,10 +91,7 @@ def write_pymodule(
     if resource.outputs:
         pymodule.write(str(resource.outputs))
         pymodule.write("\n\n")
-    pymodule.write(f"class {resource.name}Bicep(TypedDict):\n")
-    pymodule.write("    symbol: BicepExpression\n")
-    pymodule.write("    id: ResourceId\n")
-    pymodule.write("    name: ResourceName\n")
+    pymodule.write(f"class {resource.name}Bicep(Module):\n")
     if resource.outputs:
         pymodule.write(f"    outputs: {resource.name}Outputs\n")
     else:
@@ -300,7 +298,7 @@ def run() -> None:
             initfile.write("\n")
             initfile.write("__all__ = [\n")
             for module in all_modules:
-                initfile.write(module[1])
+                initfile.write("    " + module[1])
             initfile.write("]\n")
         # outputs = []
         # for resourcename in os.listdir(basedir):
