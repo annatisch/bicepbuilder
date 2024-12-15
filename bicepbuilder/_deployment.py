@@ -164,7 +164,7 @@ class infra(AddResourceMixin):
             tag: Optional[str] = None,
             batch_size: Optional[int] = None,
             description: Optional[str] = None
-    ) -> StorageAccountBicep:
+    ) -> BicepExpression:
         ...
 
     def __exit__(self, *args) -> None:

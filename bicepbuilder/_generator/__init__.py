@@ -8,7 +8,12 @@ import os
 import marko
 
 from ._nodes import MarkdownNode, BicepObject
-from ._utils import class_name, param_name
+from ._utils import (
+    class_name,
+    param_name,
+    combined_module_name,
+    camelcase
+)
 
 
 _MODULE_TEMPLATE = """
@@ -270,36 +275,42 @@ def run() -> None:
         output_funcs = resources_from_dir(basename, basedir, module_output_dir)
         print("Outputs: ", output_funcs)
         if output_funcs:
-            # module_init = os.path.join(module_output_dir, "__init__.py")
-            # with open(module_init, 'w') as initfile:
-            #     for output in output_funcs:
-            #         initfile.write(f"from .{output} import {output}\n")
-            #     initfile.write("\n")
-            #     initfile.write("__all__ = [\n")
-            #     for output in output_funcs:
-            #         initfile.write(f"    '{output}'\n")
-            #     initfile.write("]\n")
+            module_init = os.path.join(module_output_dir, "__init__.py")
+            with open(module_init, 'w') as initfile:
+                for output in output_funcs:
+                    initfile.write(f"from .{output} import {output}\n")
+                initfile.write("\n")
+                initfile.write("__all__ = [\n")
+                for output in output_funcs:
+                    initfile.write(f"    '{output}'\n")
+                initfile.write("]\n")
             for output in output_funcs:
-                if output[0:len(module_name)] == module_name:
-                    combined_name = output
-                elif output.startswith(module_name.split('_')[-1] + "_"):
-                    spliced = module_name.rpartition('_')[0]
-                    combined_name  = f"{spliced}_{output}"
-                else:
-                    combined_name = f"{module_name}_{output}"
-                all_modules.append((f"from .{module_name}.{output} import {output} as {combined_name}\n", f"'{combined_name}'\n"))
+                combined_module = combined_module_name(module_name, output)
+                combined_class = camelcase(combined_module)
+                output_class = camelcase(output)
+                all_modules.append(
+                    (
+                        f"from .{module_name}.{output} import {output} as {combined_module}, {output_class} as {combined_class}, {output_class}Bicep as {combined_class}Bicep\n",
+                        f"    '{combined_module}'\n    '{combined_class}'\n    '{combined_class}Bicep'\n"))
     print("All outputs", len(all_modules))
     if all_modules:
         total_init = os.path.join(output_dir, "__init__.py")
         print("Adding", total_init)
         with open(total_init, 'w') as initfile:
+            initfile.write("from typing import overload, Literal, Optional, Union, IO\n")
+            initfile.write("from ..expressions import BicepExpression\n\n")
             for module in all_modules:
                 initfile.write(module[0])
             initfile.write("\n")
             initfile.write("__all__ = [\n")
             for module in all_modules:
-                initfile.write("    " + module[1])
-            initfile.write("]\n")
+                initfile.write(module[1])
+            initfile.write("]\n\n")
+            initfile.write("class ResourceMixin:\n")
+            initfile.write("    bicep: IO[str]\n\n")
+            initfile.write("    def add(self, resource, params, **kwargs):\n")
+            initfile.write("        return globals()[resource](self.bicep, params, **kwargs)\n")
+
         # outputs = []
         # for resourcename in os.listdir(basedir):
         #     resourcedir = os.path.join(basedir, resourcename)

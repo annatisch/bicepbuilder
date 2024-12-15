@@ -4,7 +4,7 @@ from typing import IO, Dict, List, Optional, Tuple, Protocol
 import re
 import os
 
-from ._utils import singular_name, class_name, param_name
+from ._utils import singular_class_name, class_name, param_name
 
 TYPES = {
     "string": "str",
@@ -43,7 +43,7 @@ class ResourceMap(MarkdownNode):
             for child in node.children:
                 if child.get_type() == "CodeSpan":
                     self._current_resource = child.children
-                    self.resources[singular_name(self._current_resource.split('/')[-1])] = self._current_resource
+                    self.resources[singular_class_name(self._current_resource.split('/')[-1])] = self._current_resource
                 if child.get_type() == "Link":
                     self.versions[self._current_resource] = child.children[0].children
 
@@ -296,18 +296,13 @@ class Parameter:
         if self.object:
             return self.object.close()
         if self.type == "List" and not self.subtype:
-            classname = singular_name(self.name)
+            classname = singular_class_name(self.name)
             if classname in self.parent.subresources:
                 self.parent.imports.append(self.parent.subresources[classname])
                 self.subtype = f"'{classname}'"
         if self.type == "Dict" and not self.subtype:
-            classname = singular_name(self.name)
+            classname = singular_class_name(self.name)
             if classname in self.parent.subresources:
                 self.parent.imports.append(self.parent.subresources[classname])
                 self.type = f"'{classname}'"
         return []
-        # if self.type in ["List", "Dict"] and not self.subtype:
-        #     resource = build_resource_name(self.name)
-        #     if os.path.isdir(resource):
-        #         pass  # TODO: parse
-
