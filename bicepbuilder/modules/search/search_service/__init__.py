@@ -1,0 +1,317 @@
+from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
+from typing_extensions import Required
+
+from .._utils import (
+    generate_suffix,
+    resolve_value,
+    resolve_key,
+    serialize_dict,
+    serialize_list,
+)
+from ..expressions import (
+    BicepExpression,
+    Module,
+    ResourceId,
+    ResourceName,
+    Deployment,
+    Output,
+)
+
+if TYPE_CHECKING:
+    from .shared_private_link_resource import SharedPrivateLinkResource
+
+
+class AuthOption(TypedDict, total=False):
+    """Defines the options for how the data plane API of a Search service authenticates requests. Must remain an empty object {} if 'disableLocalAuth' is set to true."""
+    apiKeyOnly: Dict[str, object]
+    """Indicates that only the API key can be used for authentication."""
+
+
+class AadOrApiKey(TypedDict, total=False):
+    """Indicates that either the API key or an access token from a Microsoft Entra ID tenant can be used for authentication."""
+    aadAuthFailureMode: Literal['http401WithBearerChallenge', 'http403']
+    """Describes what response the data plane API of a search service would send for requests that failed authentication."""
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
+class LogCategoriesAndGroup(TypedDict, total=False):
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    category: str
+    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
+    categoryGroup: str
+    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
+
+
+class MetricCategory(TypedDict, total=False):
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    category: Required[str]
+    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
+
+
+class Lock(TypedDict, total=False):
+    """The lock settings for all Resources in the solution."""
+    kind: Literal['CanNotDelete', 'None', 'ReadOnly']
+    """Specify the type of lock."""
+    name: str
+    """Specify the name of lock."""
+
+
+class ManagedIdentity(TypedDict, total=False):
+    """The managed identity definition for this resource."""
+    systemAssigned: bool
+    """Enables system assigned managed identity on the resource."""
+    userAssignedResourceIds: List[object]
+    """The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."""
+
+
+class NetworkRuleSet(TypedDict, total=False):
+    """Network specific rules that determine how the Azure Cognitive Search service may be reached."""
+    bypass: Literal['AzurePortal', 'None']
+    """Network specific rules that determine how the Azure AI Search service may be reached."""
+
+
+class IpRule(TypedDict, total=False):
+    """A list of IP restriction rules that defines the inbound network(s) with allowing access to the search service endpoint. At the meantime, all other public IP networks are blocked by the firewall. These restriction rules are applied only when the 'publicNetworkAccess' of the search service is 'enabled'; otherwise, traffic over public interface is not allowed even with any public IP rules, and private endpoint connections would be the exclusive access method."""
+    value: Required[str]
+    """Value corresponding to a single IPv4 address (eg., 123.1.2.3) or an IP range in CIDR format (eg., 123.1.2.3/24) to be allowed."""
+
+
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the Private Endpoint IP configuration is included."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the Private Endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the Private Endpoint to."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the Private Endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
+    service: str
+    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/Resource Groups in this deployment."""
+
+
+class CustomDnsConfig(TypedDict, total=False):
+    """Custom DNS configurations."""
+    ipAddresses: Required[List[object]]
+    """A list of private IP addresses of the private endpoint."""
+    fqdn: str
+    """FQDN that resolves to private endpoint IP address."""
+
+
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+
+
+class IpConfigurationProperties(TypedDict, total=False):
+    """Properties of private endpoint IP configurations."""
+    groupId: Required[str]
+    """The ID of a group obtained from the remote resource that this private endpoint should connect to."""
+    memberName: Required[str]
+    """The member name of a group obtained from the remote resource that this private endpoint should connect to."""
+    privateIPAddress: Required[str]
+    """A private IP address obtained from the private endpoint's subnet."""
+
+
+class Lock(TypedDict, total=False):
+    """Specify the type of lock."""
+    kind: Literal['CanNotDelete', 'None', 'ReadOnly']
+    """Specify the type of lock."""
+    name: str
+    """Specify the name of lock."""
+
+
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    name: str
+    """The name of the Private DNS Zone Group."""
+
+
+class PrivateDnsZoneGroupConfig(TypedDict, total=False):
+    """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
+    privateDnsZoneResourceId: Required[str]
+    """The resource id of the private DNS zone."""
+    name: str
+    """The name of the private DNS Zone Group config."""
+
+
+class RoleAssignment(TypedDict, total=False):
+    """Array of role assignments to create."""
+    principalId: Required[str]
+    """The principal ID of the principal (user/group/identity) to assign the role to."""
+    roleDefinitionIdOrName: Required[str]
+    """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
+    condition: str
+    """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
+    conditionVersion: Literal['2.0']
+    """Version of the condition."""
+    delegatedManagedIdentityResourceId: str
+    """The Resource Id of the delegated managed identity resource."""
+    description: str
+    """The description of the role assignment."""
+    name: str
+    """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
+    principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
+    """The principal type of the assigned principal ID."""
+
+
+class RoleAssignment(TypedDict, total=False):
+    """Array of role assignments to create."""
+    principalId: Required[str]
+    """The principal ID of the principal (user/group/identity) to assign the role to."""
+    roleDefinitionIdOrName: Required[str]
+    """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
+    condition: str
+    """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
+    conditionVersion: Literal['2.0']
+    """Version of the condition."""
+    delegatedManagedIdentityResourceId: str
+    """The Resource Id of the delegated managed identity resource."""
+    description: str
+    """The description of the role assignment."""
+    name: str
+    """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
+    principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
+    """The principal type of the assigned principal ID."""
+
+
+class SecretsExportConfiguration(TypedDict, total=False):
+    """Key vault reference and secret settings for the module's secrets export."""
+    keyVaultResourceId: Required[str]
+    """The key vault name where to store the API Admin keys generated by the modules."""
+    primaryAdminKeyName: str
+    """The primaryAdminKey secret name to create."""
+    secondaryAdminKeyName: str
+    """The secondaryAdminKey secret name to create."""
+
+
+class SearchService(TypedDict, total=False):
+    """"""
+    name: Required[str]
+    """The name of the Azure Cognitive Search service to create or update. Search service names must only contain lowercase letters, digits or dashes, cannot use dash as the first two or last one characters, cannot contain consecutive dashes, and must be between 2 and 60 characters in length. Search service names must be globally unique since they are part of the service URI (https://"""
+    cmkEnforcement: Literal['Disabled', 'Enabled', 'Unspecified']
+    """Describes a policy that determines how resources within the search service are to be encrypted with Customer Managed Keys."""
+    disableLocalAuth: bool
+    """When set to true, calls to the search service will not be permitted to utilize API keys for authentication. This cannot be set to true if 'authOptions' are defined."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    hostingMode: Literal['default', 'highDensity']
+    """Applicable only for the standard3 SKU. You can set this property to enable up to 3 high density partitions that allow up to 1000 indexes, which is much higher than the maximum indexes allowed for any other SKU. For the standard3 SKU, the value is either 'default' or 'highDensity'. For all other SKUs, this value must be 'default'."""
+    location: str
+    """Location for all Resources."""
+    partitionCount: int
+    """The number of partitions in the search service; if specified, it can be 1, 2, 3, 4, 6, or 12. Values greater than 1 are only valid for standard SKUs. For 'standard3' services with hostingMode set to 'highDensity', the allowed values are between 1 and 3."""
+    publicNetworkAccess: Literal['Disabled', 'Enabled']
+    """This value can be set to 'Enabled' to avoid breaking changes on existing customer resources and templates. If set to 'Disabled', traffic over public interface is not allowed, and private endpoint connections would be the exclusive access method."""
+    replicaCount: int
+    """The number of replicas in the search service. If specified, it must be a value between 1 and 12 inclusive for standard SKUs or between 1 and 3 inclusive for basic SKU."""
+    semanticSearch: Literal['disabled', 'free', 'standard']
+    """Sets options that control the availability of semantic search. This configuration is only possible for certain search SKUs in certain locations."""
+    sharedPrivateLinkResources: List['SharedPrivateLinkResource']
+    """The sharedPrivateLinkResources to create as part of the search Service."""
+    sku: Literal['basic', 'free', 'standard', 'standard2', 'standard3', 'storage_optimized_l1', 'storage_optimized_l2']
+    """Defines the SKU of an Azure Cognitive Search Service, which determines price tier and capacity limits."""
+    tags: Dict[str, object]
+    """Tags to help categorize the resource in the Azure portal."""
+
+
+class SearchServiceOutputs(TypedDict, total=False):
+    """Outputs for SearchService"""
+    exportedSecrets: Output[Literal['object']]
+    """A hashtable of references to the secrets exported to the provided Key Vault. The key of each reference is each secret's name."""
+    location: Output[Literal['string']]
+    """The location the resource was deployed into."""
+    name: Output[Literal['string']]
+    """The name of the search service."""
+    resourceGroupName: Output[Literal['string']]
+    """The name of the resource group the search service was created in."""
+    resourceId: Output[Literal['string']]
+    """The resource ID of the search service."""
+    systemAssignedMIPrincipalId: Output[Literal['string']]
+    """The principal ID of the system assigned identity."""
+
+
+class SearchServiceBicep(Module):
+    outputs: SearchServiceOutputs
+
+
+def search_service(
+        bicep: IO[str],
+        /,
+        *,
+        params: SearchService,
+        scope: Optional[BicepExpression] = None,
+        depends_on: Optional[Union[str, BicepExpression]] = None,
+        name: Optional[Union[str, BicepExpression]] = None,
+        tag: str = '0.8.0',
+        registry_prefix: str = 'br/public:avm/res',
+        path: str = 'search/search-service',
+        batch_size: Optional[int] = None,
+        description: Optional[str] = None,
+) -> SearchServiceBicep:
+    symbol = "search_service_" + generate_suffix()
+    name = name or Deployment().name.format(suffix="_" + symbol)
+    if description:
+        bicep.write(f"@description('{description}')\n")
+    if batch_size:
+        bicep.write(f"@batchSize({batch_size})\n")
+    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"  name: {resolve_value(name)}\n")
+    if scope is not None:
+        bicep.write(f"  scope: {resolve_value(scope)}\n")
+    bicep.write(f"  params: {{\n")
+    
+    serialize_dict(bicep, params, indent="    ")
+    bicep.write(f"  }}\n")
+    if depends_on:
+        bicep.write(f"  dependsOn: [\n")
+        serialize_list(bicep, depends_on, indent="    ")
+        bicep.write(f"  ]\n")
+    bicep.write(f"}}\n")
+    output = SearchServiceBicep(symbol)
+    output.outputs = {
+            'exportedSecrets': Output(symbol, 'exportedSecrets', 'object'),
+            'location': Output(symbol, 'location', 'string'),
+            'name': Output(symbol, 'name', 'string'),
+            'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
+            'resourceId': Output(symbol, 'resourceId', 'string'),
+            'systemAssignedMIPrincipalId': Output(symbol, 'systemAssignedMIPrincipalId', 'string'),
+        }
+
+    return output
