@@ -1,33 +1,47 @@
 from typing import List, TypeVar, Generic, Literal, Optional, Any, Union
 from enum import Enum
 
-from ._utils import resolve_value
+from ._utils import resolve_value, serialize
 
-
-def resolve_ref(self, expression: Union['BicepExpression', str]):
-    try:
-        return expression.resolve()
-    except AttributeError:
-        return expression
-
+BicepDataTypes = Literal["string", "array", "object", "int", "bool"]
 
 class BicepExpression:
     def __init__(self, value: Union['BicepExpression', str], /) -> None:
         self._value = value
 
+    def _resolve_ref(self, expression: Union['BicepExpression', str]):
+        try:
+            return expression.resolve()
+        except AttributeError:
+            return expression
+
+    def _resolve_obj(self, value: Union['BicepExpression', Any]):
+        try:
+            return value.resolve()
+        except AttributeError:
+            return serialize(value)
+
     def resolve(self) -> str:
-        return resolve_ref(self._value)
+        return self._resolve_ref(self._value)
     
     def format(
             self,
             *,
-            prefix: Union['BicepExpression', str],
-            suffix: Union['BicepExpression', str],
+            prefix: Union['BicepExpression', str] = "",
+            suffix: Union['BicepExpression', str] = "",
     ) -> str:
-        return f"{resolve_ref(prefix)}${{{self.resolve()}}}{resolve_ref(suffix)}"
+        return f"{self._resolve_ref(prefix)}${{{self.resolve()}}}{self._resolve_ref(suffix)}"
 
+class BicepParam(BicepExpression):
+    name: str
+    type: str
 
-OutputType = TypeVar("OutputType", bound=Literal["string", "array", "object"])
+    def __init__(self, value: Union[BicepExpression, str], type: BicepDataTypes):
+        self._value = value
+        self.type = type
+        self.name = value
+
+OutputType = TypeVar("OutputType", bound=BicepDataTypes)
 class Output(BicepExpression, Generic[OutputType]):
     type: OutputType
 
@@ -42,7 +56,39 @@ class Output(BicepExpression, Generic[OutputType]):
         self.type = type
 
     def resolve(self) -> str:
-        return f"{resolve_ref(self._resource)}.outputs.{resolve_ref(self._name)}"
+        return f"{self._resolve_ref(self._resource)}.outputs.{self._resolve_ref(self._name)}"
+
+
+class Resource(BicepExpression):
+    def __init__(self, value: str, /) -> None:
+        self._value = value
+
+    def resolve(self) -> str:
+        return self._value
+
+    @property
+    def id(self) -> BicepExpression:
+        return ResourceId(self)
+
+    @property
+    def name(self) -> BicepExpression:
+        return ResourceName(self)
+
+
+class Identity(BicepExpression):
+    def __init__(self, value: str, /) -> None:
+        self._value = value
+
+    def resolve(self) -> str:
+        return self._value
+
+    @property
+    def id(self) -> BicepExpression:
+        return ResourceId(self)
+
+    @property
+    def principal_id(self) -> BicepExpression:
+        return PrincipalId(self)
 
 
 class Module(BicepExpression):
@@ -69,7 +115,7 @@ class ResourceId(BicepExpression):
         self._resource = value
 
     def resolve(self) -> str:
-        return f"{resolve_ref(self._resource)}.id"
+        return f"{self._resolve_ref(self._resource)}.id"
 
 
 class ResourceName(BicepExpression):
@@ -77,7 +123,7 @@ class ResourceName(BicepExpression):
         self._resource = value
 
     def resolve(self) -> str:
-        return f"{resolve_ref(self._resource)}.name"
+        return f"{self._resolve_ref(self._resource)}.name"
 
 
 class ResourceLocation(BicepExpression):
@@ -85,7 +131,7 @@ class ResourceLocation(BicepExpression):
         self._resource = value
 
     def resolve(self) -> str:
-        return f"{resolve_ref(self._resource)}.location"
+        return f"{self._resolve_ref(self._resource)}.location"
 
 
 class ResourceGroup(BicepExpression):
@@ -173,12 +219,12 @@ class Subscription(BicepExpression):
 
 
 class PrincipalId(BicepExpression):
-    def __init__(self, symbol: Union[BicepExpression, str], /) -> None:
+    def __init__(self, symbol: Union[BicepExpression, str] = None, /) -> None:
         self._resource = symbol
 
     def resolve(self) -> str:
-        if self.resource:
-            return f"{resolve_ref(self._resource)}.properties.principalId"
+        if self._resource:
+            return f"{self._resolve_ref(self._resource)}.properties.principalId"
         return "principalId"
 
 
@@ -190,6 +236,13 @@ class UniqueString(BicepExpression):
         arg_str = ", ".join([resolve_value(a) for a in self._args])
         return f"uniqueString({arg_str})"
 
+class UnionString(BicepExpression):
+    def __init__(self, a_value: Union[BicepExpression, str], b_value: Union[BicepExpression, str], /) -> None:
+        self._a = a_value
+        self._b = b_value
+
+    def resolve(self):
+        return f"union({resolve_value(self._a)}, {resolve_value(self._b)})"
 
 class Take(BicepExpression):
     def __init__(self, value: Union[BicepExpression, str, List], take: int, /) -> None:

@@ -21,9 +21,10 @@ with infra() as deployment:
         allowed=["westus", "westus2", "eastus", "eastus2"],
         description="Primary location for all resources"
     )
-    tags = deployment.var("tags", {'azd-env-name': env_name})
+    tags = deployment.var("tags", "object", {'azd-env-name': env_name})
     cm_id = deployment.var(
         "cloudmachineId",
+        "string",
         UniqueString(Subscription().subscription_id, env_name, location)
     )
 
@@ -32,24 +33,13 @@ with infra() as deployment:
         location=location,
         tags=UnionString(tags, {'DoNotDelete': True}))
 
-    with deployment.module(
-        "cloudmachine",
-        {
-            "location": location,
-            "principalId": principal_id,
-            "tags": tags,
-            "cloudmachineId": cm_id
-        },
-        scope=rg
-    ) as cloudmachine_module:
+    with deployment.module("cloudmachine", scope=rg) as cloudmachine_module:
         cloudmachine_module.param(location, default=ResourceGroup().location)
         cloudmachine_module.param(principal_id)
-        cloudmachine_module.param("tags", "object", value=tags)
-        cloudmachine_module.param("cloudmachineId", "string", value=cm_id)
+        cloudmachine_module.param(tags)
+        cloudmachine_module.param(cm_id)
 
-        managed_identity = cloudmachine_module.resource(
-            "Microsoft.ManagedIdentity/userAssignedIdentities",
-            "2023-01-31",
+        managed_identity = cloudmachine_module.managed_identity(
             name=cm_id.format(prefix="antisch"),
             tags=tags,
             location=location
@@ -72,7 +62,29 @@ with infra() as deployment:
             "tableServices": {"tables": []},
             "blobServices": {
                 "containers": [{"name": "Default"}]
-            }
+            },
+            "roleAssignments": [
+                {
+                    "roleDefinitionIdOrName": "Storage Blob Data Contributor",
+                    "principalType": "User",
+                    "principalId": principal_id
+                },
+                {
+                    "roleDefinitionIdOrName": "Storage Blob Data Contributor",
+                    "principalType": "ServicePrincipal",
+                    "principalId": managed_identity.principal_id
+                },
+                {
+                    "roleDefinitionIdOrName": "Storage Table Data Contributor",
+                    "principalType": "User",
+                    "principalId": principal_id,
+                },
+                {
+                    "roleDefinitionIdOrName": "Storage Table Data Contributor",
+                    "principalType": "ServicePrincipal",
+                    "principalId": managed_identity.principal_id
+                }
+            ]
         }
 
         storage = cloudmachine_module.add(
