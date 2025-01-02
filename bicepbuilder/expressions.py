@@ -88,25 +88,17 @@ class ResourceLocation(BicepExpression):
         return f"{resolve_ref(self._resource)}.location"
 
 
-class Deployment(BicepExpression):
-    def __init__(self) -> None:
-        ...
-
-    def resolve(self) -> str:
-        return "deployment()"
-
-    @property
-    def name(self) -> BicepExpression:
-        return ResourceName(self)
-
-
 class ResourceGroup(BicepExpression):
     def __init__(
             self,
             resource_group: Optional[Union[BicepExpression, str]] = None,
-            subscription: Optional[Union[BicepExpression, str]] = None, /):
+            subscription: Optional[Union[BicepExpression, str]] = None,
+            /,
+            **kwargs: Any
+    ):
         self._rg = resource_group
         self._sub = subscription
+        self._module_path: str = kwargs.get('module_path')
 
     def resolve(self) -> str:
         if self._rg:
@@ -117,20 +109,32 @@ class ResourceGroup(BicepExpression):
 
     @property
     def location(self) -> BicepExpression:
-        if self._rg:
-            raise ValueError("Named resource group can only be used for scope, not properties.")
-        return ResourceLocation(self)
+        #if self._rg:
+        #    raise ValueError("Named resource group can only be used for scope, not properties.")
+        return ResourceLocation("resourceGroup()")
 
     @property
     def id(self) -> BicepExpression:
-        if self._rg:
-            raise ValueError("Named resource group can only be used for scope, not properties.")
-        return ResourceId(self)
+        #if self._rg:
+        #    raise ValueError("Named resource group can only be used for scope, not properties.")
+        return ResourceId("resourceGroup()")
 
     @property
     def name(self) -> BicepExpression:
-        if self._rg:
-            raise ValueError("Named resource group can only be used for scope, not properties.")
+        #if self._rg:
+        #    raise ValueError("Named resource group can only be used for scope, not properties.")
+        return ResourceName("resourceGroup()")
+
+
+class Deployment(BicepExpression):
+    def __init__(self) -> None:
+        ...
+
+    def resolve(self) -> str:
+        return "deployment()"
+
+    @property
+    def name(self) -> BicepExpression:
         return ResourceName(self)
 
 
