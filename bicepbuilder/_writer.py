@@ -3,7 +3,7 @@ import os
 import json
 
 from ._utils import generate_suffix, resolve_value, serialize, serialize_dict, serialize_list
-from .expressions import BicepExpression, BicepParam, Deployment, Identity, Module, PrincipalId, Resource
+from .expressions import BicepExpression, BicepParam, Deployment, Identity, Module, Output, PrincipalId, Resource, ResourceGroup, ResourceId, ResourceName
 from .modules import AddResourceMixin
 
 
@@ -240,7 +240,6 @@ class BicepWriter(AddResourceMixin):
     def module(
             self,
             name: str,
-            params: Dict[str, Any],
             /,
             *,
             format: Literal["file"] = "file",
@@ -311,6 +310,7 @@ class BicepWriter(AddResourceMixin):
                 self._bicep.write("  ]")
             return LocalModule(
                 self._bicep,
+                symbol,
                 module_path=self._module_dir,
                 module_name=args[0]
             )
@@ -322,10 +322,10 @@ class BicepWriter(AddResourceMixin):
             name: Union[str, BicepExpression],
             location: Union[str, BicepExpression],
             tags: Optional[Union[Dict[str, str], BicepExpression]] = None,
-    ) -> PrincipalId:
+    ) -> Identity:
         ...
     @overload
-    def managed_identity(self, *, existing: Union[str, BicepExpression]) -> PrincipalId:
+    def managed_identity(self, *, existing: Union[str, BicepExpression]) -> Identity:
         ...
     def managed_identity(
             self,
@@ -345,6 +345,62 @@ class BicepWriter(AddResourceMixin):
         )
         return Identity(managed_identity._value)
 
+    @overload
+    def resource_group(
+            self,
+            *,
+            name: Union[str, BicepExpression],
+            location: Union[str, BicepExpression],
+            tags: Optional[Union[Dict[str, str], BicepExpression]] = None,
+            scope: Optional[BicepExpression] = None
+    ) -> ResourceGroup:
+        ...
+    @overload
+    def resource_group(
+            self,
+            *,
+            existing: Union[str, BicepExpression],
+            version: Optional[str] = None,
+    ) -> ResourceGroup:
+        ...
+    def resource_group(
+            self,
+            *,
+            name: Optional[Union[str, BicepExpression]] = None,
+            location: Optional[Union[str, BicepExpression]] = None,
+            existing: Optional[Union[str, BicepExpression]] = None,
+            tags: Optional[Union[Dict[str, str], BicepExpression]] = None
+    ) -> ResourceGroup:
+        if existing:
+            rg = self.resource(
+                "Microsoft.Resources/resourceGroups",
+                "2021-04-01",
+                existing=existing,
+            )
+        else:
+            rg = self.resource(
+                "Microsoft.Resources/resourceGroups",
+                "2021-04-01",
+                name=name,
+                location=location,
+                tags=tags
+            )
+        return ResourceGroup(rg.name)
+
+    def output(self, name: str, value) -> None:
+        if isinstance(value, Output):
+            self._bicep.write(f"output {name} {value.type} = {value.resolve()}\n")
+        elif isinstance(value, (ResourceId, ResourceName)):
+            self._bicep.write(f"output {name} string = {value.resolve()}\n")
+        elif isinstance(value, BicepExpression):
+            raise ValueError(f"Unexpected BicepExpression: {value}")
+        elif isinstance(value, str):
+            self._bicep.write(f"output {name} string = '{value}'\n")
+        elif isinstance(value, int):
+            self._bicep.write(f"output {name} int = {value}\n")
+        else:
+            raise TypeError(f"Unexpected output type: {value}")
+
     def __exit__(self, *args) -> None:
         if self._bicep:
             self._bicep.close()
@@ -352,10 +408,11 @@ class BicepWriter(AddResourceMixin):
             self._bicep_params.close()
 
 
-class LocalModule(BicepWriter):
+class LocalModule(BicepWriter, Module):
     def __init__(
             self,
             parent_bicep: IO[str],
+            symbol: str,
             module_path: str,
             *,
             module_name: str,
@@ -368,10 +425,12 @@ class LocalModule(BicepWriter):
             params=params,
             metadata=metadata
         )
+        self._value = symbol
+        self.outputs = {}
         self._parent_bicep = parent_bicep
         self._module_params = {}
 
-    def __enter__(self) -> Self:
+    def __enter__(self) -> 'LocalModule':
         super().__enter__()
         self._parent_bicep.write("  params: {\n")
         return self
@@ -483,3 +542,18 @@ class LocalModule(BicepWriter):
                 if 'default' not in kwargs:
                     raise ValueError("Module param must pass in value or specify default.")
         return super().param(*args, **kwargs)
+
+    def output(self, name: str, value) -> None:
+        super().output(name, value)
+        if isinstance(value, Output):
+            self.outputs[name] = Output(symbol=self._value, name=name, type=value.type)
+        elif isinstance(value, (ResourceId, ResourceName)):
+            self.outputs[name] = Output(symbol=self._value, name=name, type="string")
+        elif isinstance(value, BicepExpression):
+            raise ValueError(f"Unexpected BicepExpression: {value}")
+        elif isinstance(value, str):
+            self.outputs[name] = Output(symbol=self._value, name=name, type="string")
+        elif isinstance(value, int):
+            self.outputs[name] = Output(symbol=self._value, name=name, type="int")
+        else:
+            raise TypeError(f"Unexpected output type: {value}")

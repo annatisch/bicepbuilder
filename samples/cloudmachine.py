@@ -1,6 +1,6 @@
 from bicepbuilder import infra
-from bicepbuilder.expressions import ResourceGroup, UnionString, UniqueString, Subscription, Union
-from bicepbuilder.modules import StorageAccount
+from bicepbuilder.expressions import ResourceGroup, Take, UnionString, UniqueString, Subscription, Union
+from bicepbuilder.modules import StorageAccount, ServiceBusNamespace
 
 with infra() as deployment:
     env_name = deployment.param(
@@ -45,7 +45,7 @@ with infra() as deployment:
             location=location
         )
 
-        params: StorageAccount = {
+        storage_params: StorageAccount = {
             "skuName": "Premium_LRS",
             "name": cm_id.format(prefix="antisch"),
             "location": location,
@@ -86,31 +86,91 @@ with infra() as deployment:
                 }
             ]
         }
+        storage = cloudmachine_module.add("storage_account", storage_params)
 
-        storage = cloudmachine_module.add(
-            "storage_account",
-            params,
-            )
-        #rg.output(storage["outputs"]["primaryBlobEndpoint"])
+        servicebus_params: ServiceBusNamespace = {
+            "name": cm_id.format(prefix="antisch"),
+            "location": location,
+            "tags": tags,
+            "skuObject": {"name": "Standard"},
+            "authorizationRules": [
+                {
+                    "name": Take(UniqueString(rg.id).format(prefix='cm_sb_auth_rule_'), 50),
+                    "rights": ["Listen", "Manage", "Send"]
+                }
+            ],
+            "roleAssignments": [
+                {
+                    "roleDefinitionIdOrName": "Azure Service Bus Data Owner",
+                    "principalType": "User",
+                    "principalId": principal_id
+                },
+                {
+                    "roleDefinitionIdOrName": "Azure Service Bus Data Owner",
+                    "principalType": "ServicePrincipal",
+                    "principalId": managed_identity.principal_id
+                }
+            ],
+            "topics": [
+                {
+                    "name": "cm_internal_topic",
+                    "defaultMessageTimeToLive": "P14D",
+                    "maxMessageSizeInKilobytes": 256,
+                    "enableBatchedOperations": True,
+                    "requiresDuplicateDetection": False,
+                    "supportOrdering": True,
+                    "status": "Active",
+                    "subscriptions": [
+                        {
+                            "name": "cm_internal_subscription",
+                            "deadLetteringOnFilterEvaluationExceptions": True,
+                            "deadLetteringOnMessageExpiration": True,
+                            "defaultMessageTimeToLive": "P14D",
+                            "enableBatchedOperations": True,
+                            "isClientAffine": False,
+                            "lockDuration": "PT30S",
+                            "maxDeliveryCount": 10,
+                            "requiresSession": False,
+                            "status": "Active"
+                        }
+                    ]
+                },
+                {
+                    "name": "cm_default_topic",
+                    "defaultMessageTimeToLive": "P14D",
+                    "maxMessageSizeInKilobytes": 256,
+                    "enableBatchedOperations": True,
+                    "requiresDuplicateDetection": False,
+                    "supportOrdering": True,
+                    "status": "Active",
+                    "subscriptions": [
+                        {
+                            "name": "cm_default_subscription",
+                            "deadLetteringOnFilterEvaluationExceptions": True,
+                            "deadLetteringOnMessageExpiration": True,
+                            "defaultMessageTimeToLive": "P14D",
+                            "enableBatchedOperations": True,
+                            "isClientAffine": False,
+                            "lockDuration": "PT30S",
+                            "maxDeliveryCount": 10,
+                            "requiresSession": False,
+                            "status": "Active"
+                        }
+                    ]
+                }
+            ]
+        }
 
+        servicebus = cloudmachine_module.add("service_bus_namespace", servicebus_params)
+        
+        cloudmachine_module.output("BlobEndpoint", storage.outputs["primaryBlobEndpoint"])
+        cloudmachine_module.output("TableEndpoint", storage.outputs["serviceEndpoints"].get("table", "string"))
+        cloudmachine_module.output("StorageId", storage.outputs["resourceId"])
+        cloudmachine_module.output("StorageName", storage.outputs["name"])
+        cloudmachine_module.output("ServiceBusId", servicebus.outputs["resourceId"])
+        cloudmachine_module.output("ServiceBusName", servicebus.outputs["name"])
 
-
-
-
-
-# targetScope = 'subscription'
-
-# @minLength(1)
-# @maxLength(64)
-# @description('AZD environment name')
-# param environmentName string
-
-# @description('Id of the user or app to assign application roles')
-# param principalId string
-
-# @minLength(1)
-# @description('Primary location for all resources')
-# param location string
-
-# var tags = { 'azd-env-name': environmentName }
-# var cloudmachineId = uniqueString(subscription().subscriptionId, environmentName, location)
+    deployment.output("AZURE_CLOUDMACHINE_BLOB_ENDPOINT", cloudmachine_module.outputs["BlobEndpoint"])
+    deployment.output("AZURE_CLOUDMACHINE_TABLE_ENDPOINT", cloudmachine_module.outputs["BlobEndpoint"])
+    deployment.output("AZURE_CLOUDMACHINE_STORAGE_ID", cloudmachine_module.outputs["StorageId"])
+    deployment.output("AZURE_CLOUDMACHINE_STORAGE_NAME", cloudmachine_module.outputs["StorageName"])

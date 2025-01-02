@@ -1,4 +1,4 @@
-from typing import List, TypeVar, Generic, Literal, Optional, Any, Union
+from typing import Dict, List, TypeVar, Generic, Literal, Optional, Any, Union
 from enum import Enum
 
 from ._utils import resolve_value, serialize
@@ -42,6 +42,7 @@ class BicepParam(BicepExpression):
         self.name = value
 
 OutputType = TypeVar("OutputType", bound=BicepDataTypes)
+SubOutputType = TypeVar("SubOutputType", bound=BicepDataTypes)
 class Output(BicepExpression, Generic[OutputType]):
     type: OutputType
 
@@ -54,6 +55,26 @@ class Output(BicepExpression, Generic[OutputType]):
         self._resource = symbol
         self._name = name
         self.type = type
+
+    def get(self, index: Union[str, int], type: SubOutputType) -> 'Output[SubOutputType]':
+        if self.type == "object":
+            if not isinstance(index, str):
+                raise TypeError("Can only use string indexes with object outputs.")
+            return Output(
+                symbol=self._resource,
+                name=f"{self._resolve_ref(self._name)}.{index}",
+                type=type
+            )
+        if self.type == "array":
+            if not isinstance(index, int):
+                raise TypeError("Can only use int indexes with array outputs.")
+            return Output(
+                symbol=self._resource,
+                name=f"{self._resolve_ref(self._name)}[{index}]",
+                type=type
+            )
+        else:
+            raise TypeError("Values can only be retrieved from 'object' and 'array' type outputs.")
 
     def resolve(self) -> str:
         return f"{self._resolve_ref(self._resource)}.outputs.{self._resolve_ref(self._name)}"
@@ -92,22 +113,29 @@ class Identity(BicepExpression):
 
 
 class Module(BicepExpression):
+    outputs: Dict[str, Output]
+
     def __init__(self, value: str, /) -> None:
         self._value = value
+        self.outputs = {}
 
     def resolve(self) -> str:
         return self._value
 
-    @property
-    def id(self) -> BicepExpression:
-        return ResourceId(self)
+    # @property
+    # def id(self) -> BicepExpression:
+    #     return ResourceId(self)
 
     @property
-    def name(self) -> BicepExpression:
+    def module_name(self) -> BicepExpression:
         return ResourceName(self)
 
     def get_output(self, name: Union[BicepExpression, str], type: OutputType) -> Output[OutputType]:
-        return Output(self, name, type)
+        try:
+            return self.outputs[name]
+        except KeyError:
+            self.outputs[name] = Output(self, name, type)
+        return self.outputs[name]
 
 
 class ResourceId(BicepExpression):
