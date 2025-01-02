@@ -60,7 +60,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Owner', 'Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Application Group Contributor', 'Desktop Virtualization Application Group Contributor', 'Desktop Virtualization Application Group Reader', 'Desktop Virtualization Contributor', 'Desktop Virtualization Host Pool Contributor', 'Desktop Virtualization Host Pool Reader', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Reader', 'Desktop Virtualization Session Host Operator', 'Desktop Virtualization User', 'Desktop Virtualization User Session Operator', 'Desktop Virtualization Virtual Machine Contributor', 'Desktop Virtualization Workspace Contributor', 'Desktop Virtualization Workspace Reader']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -98,7 +98,7 @@ class DesktopVirtualizationScalingPlan(TypedDict, total=False):
     """Location of the Scaling Plan. Defaults to resource group location."""
     lock: 'Lock'
     """The lock settings of the service."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Owner', 'Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Application Group Contributor', 'Desktop Virtualization Application Group Contributor', 'Desktop Virtualization Application Group Reader', 'Desktop Virtualization Contributor', 'Desktop Virtualization Host Pool Contributor', 'Desktop Virtualization Host Pool Reader', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Reader', 'Desktop Virtualization Session Host Operator', 'Desktop Virtualization User', 'Desktop Virtualization User Session Operator', 'Desktop Virtualization Virtual Machine Contributor', 'Desktop Virtualization Workspace Contributor', 'Desktop Virtualization Workspace Reader']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     schedules: List[object]
     """Schedules of the Scaling Plan."""

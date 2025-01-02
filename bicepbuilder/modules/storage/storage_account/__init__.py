@@ -169,7 +169,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -217,7 +217,7 @@ class PrivateEndpoint(TypedDict, total=False):
     """The name of the private link connection to create."""
     resourceGroupName: str
     """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags to be applied on all resources/resource groups in this deployment."""
@@ -227,7 +227,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Owner', 'Reader', 'Reader and Data Access', 'Role Based Access Control Administrator', 'Storage Account Backup Contributor', 'Storage Account Contributor', 'Storage Account Key Operator Service Role', 'Storage Blob Data Contributor', 'Storage Blob Data Owner', 'Storage Blob Data Reader', 'Storage Blob Delegator', 'Storage File Data Privileged Contributor', 'Storage File Data Privileged Reader', 'Storage File Data SMB Share Contributor', 'Storage File Data SMB Share Elevated Contributor', 'Storage File Data SMB Share Reader', 'Storage Queue Data Contributor', 'Storage Queue Data Message Processor', 'Storage Queue Data Message Sender', 'Storage Queue Data Reader', 'Storage Table Data Contributor', 'Storage Table Data Reader', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -327,7 +327,7 @@ class StorageAccount(TypedDict, total=False):
     """Queue service and queues to create."""
     requireInfrastructureEncryption: bool
     """A Boolean indicating whether or not the service applies a secondary layer of encryption with platform managed keys for data at rest. For security reasons, it is recommended to set it to true."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reader and Data Access', 'Role Based Access Control Administrator', 'Storage Account Backup Contributor', 'Storage Account Contributor', 'Storage Account Key Operator Service Role', 'Storage Blob Data Contributor', 'Storage Blob Data Owner', 'Storage Blob Data Reader', 'Storage Blob Delegator', 'Storage File Data Privileged Contributor', 'Storage File Data Privileged Reader', 'Storage File Data SMB Share Contributor', 'Storage File Data SMB Share Elevated Contributor', 'Storage File Data SMB Share Reader', 'Storage Queue Data Contributor', 'Storage Queue Data Message Processor', 'Storage Queue Data Message Sender', 'Storage Queue Data Reader', 'Storage Table Data Contributor', 'Storage Table Data Reader', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     sasExpirationPeriod: str
     """The SAS expiration period. DD.HH:MM:SS."""

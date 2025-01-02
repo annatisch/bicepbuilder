@@ -48,7 +48,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -82,7 +82,7 @@ class Application(TypedDict, total=False):
     """The privacy statement uri."""
     releaseNoteUri: str
     """The release note uri. Has to be a valid URL."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags for all resources."""
@@ -176,7 +176,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -208,7 +208,7 @@ class ComputeGallery(TypedDict, total=False):
     """Location for all resources."""
     lock: 'Lock'
     """The lock settings of the service."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     sharingProfile: Dict[str, object]
     """Profile for gallery sharing to subscription or tenant."""

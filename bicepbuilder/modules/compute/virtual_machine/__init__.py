@@ -94,7 +94,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Data Operator for Managed Disks', 'Desktop Virtualization Power On Contributor', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Virtual Machine Contributor', 'DevTest Labs User', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Administrator Login', 'Virtual Machine Contributor', 'Virtual Machine User Login', 'VM Scanner Operator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -238,7 +238,7 @@ class ComputeVirtualMachine(TypedDict, total=False):
     """The list of SSH public keys used to authenticate with linux based VMs."""
     rebootSetting: Literal['Always', 'IfRequired', 'Never', 'Unknown']
     """Specifies the reboot setting for all AutomaticByPlatform patch installation operations."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Data Operator for Managed Disks', 'Desktop Virtualization Power On Contributor', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Virtual Machine Contributor', 'DevTest Labs User', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Administrator Login', 'Virtual Machine Contributor', 'Virtual Machine User Login', 'VM Scanner Operator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     sasTokenValidityLength: str
     """SAS token validity length to use to download files from storage accounts. Usage: 'PT8H' - valid for 8 hours; 'P5D' - valid for 5 days; 'P1Y' - valid for 1 year. When not provided, the SAS token will be valid for 8 hours."""

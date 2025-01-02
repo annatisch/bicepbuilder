@@ -70,7 +70,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'Traffic Manager Contributor', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -108,7 +108,7 @@ class NetworkTrafficmanagerprofile(TypedDict, total=False):
     """The status of the Traffic Manager profile."""
     relativeName: str
     """The relative DNS name provided by this Traffic Manager profile. This value is combined with the DNS domain name used by Azure Traffic Manager to form the fully-qualified domain name (FQDN) of the profile."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'Traffic Manager Contributor', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""

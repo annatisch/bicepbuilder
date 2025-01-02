@@ -100,7 +100,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -146,7 +146,7 @@ class PrivateEndpoint(TypedDict, total=False):
     """The name of the private link connection to create."""
     resourceGroupName: str
     """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     service: str
     """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
@@ -158,7 +158,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Log Analytics Contributor', 'Log Analytics Reader', 'Logic App Contributor', 'Monitoring Contributor', 'Monitoring Metrics Publisher', 'Monitoring Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator', 'Tag Contributor', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -196,7 +196,7 @@ class InsightsPrivateLinkScope(TypedDict, total=False):
     """The lock settings of the service."""
     privateEndpoints: List['PrivateEndpoint']
     """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Log Analytics Contributor', 'Log Analytics Reader', 'Logic App Contributor', 'Monitoring Contributor', 'Monitoring Metrics Publisher', 'Monitoring Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator', 'Tag Contributor', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     scopedResources: List['ScopedResource']
     """Configuration details for Azure Monitor Resources."""

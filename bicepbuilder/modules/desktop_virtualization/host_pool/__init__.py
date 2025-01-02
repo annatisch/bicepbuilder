@@ -110,7 +110,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -156,7 +156,7 @@ class PrivateEndpoint(TypedDict, total=False):
     """The name of the private link connection to create."""
     resourceGroupName: str
     """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     service: str
     """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
@@ -168,7 +168,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Owner', 'Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Application Group Contributor', 'Desktop Virtualization Application Group Contributor', 'Desktop Virtualization Application Group Reader', 'Desktop Virtualization Contributor', 'Desktop Virtualization Host Pool Contributor', 'Desktop Virtualization Host Pool Reader', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Reader', 'Desktop Virtualization Session Host Operator', 'Desktop Virtualization User', 'Desktop Virtualization User Session Operator', 'Desktop Virtualization Virtual Machine Contributor', 'Desktop Virtualization Workspace Contributor', 'Desktop Virtualization Workspace Reader', 'Managed Application Contributor Role', 'Managed Application Operator Role', 'Managed Applications Reader']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -220,7 +220,7 @@ class DesktopVirtualizationHostPool(TypedDict, total=False):
     """Set public network access."""
     ring: int
     """The ring number of HostPool."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Owner', 'Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Application Group Contributor', 'Desktop Virtualization Application Group Contributor', 'Desktop Virtualization Application Group Reader', 'Desktop Virtualization Contributor', 'Desktop Virtualization Host Pool Contributor', 'Desktop Virtualization Host Pool Reader', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Reader', 'Desktop Virtualization Session Host Operator', 'Desktop Virtualization User', 'Desktop Virtualization User Session Operator', 'Desktop Virtualization Virtual Machine Contributor', 'Desktop Virtualization Workspace Contributor', 'Desktop Virtualization Workspace Reader', 'Managed Application Contributor Role', 'Managed Application Operator Role', 'Managed Applications Reader']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     ssoadfsAuthority: str
     """URL to customer ADFS server for signing WVD SSO certificates."""

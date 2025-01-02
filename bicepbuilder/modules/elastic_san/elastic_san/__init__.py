@@ -58,7 +58,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Elastic SAN Network Admin', 'Elastic SAN Owner', 'Elastic SAN Reader', 'Elastic SAN Volume Group Owner']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -148,7 +148,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Elastic SAN Network Admin', 'Elastic SAN Owner', 'Elastic SAN Reader', 'Elastic SAN Volume Group Owner']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -194,7 +194,7 @@ class PrivateEndpoint(TypedDict, total=False):
     """The name of the private link connection to create."""
     resourceGroupName: str
     """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Elastic SAN Network Admin', 'Elastic SAN Owner', 'Elastic SAN Reader', 'Elastic SAN Volume Group Owner']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     service: str
     """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
@@ -260,7 +260,7 @@ class ElasticSan(TypedDict, total=False):
     """The lock settings of the service."""
     publicNetworkAccess: Literal['Disabled', 'Enabled']
     """Whether or not public network access is allowed for this resource. For security reasons it should be """
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Elastic SAN Network Admin', 'Elastic SAN Owner', 'Elastic SAN Reader', 'Elastic SAN Volume Group Owner']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     sku: Literal['Premium_LRS', 'Premium_ZRS']
     """Specifies the SKU for the Elastic SAN."""

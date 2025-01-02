@@ -294,7 +294,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Azure Kubernetes Fleet Manager Contributor Role', 'Azure Kubernetes Fleet Manager RBAC Admin', 'Azure Kubernetes Fleet Manager RBAC Cluster Admin', 'Azure Kubernetes Fleet Manager RBAC Reader', 'Azure Kubernetes Fleet Manager RBAC Writer', 'Azure Kubernetes Service Cluster Admin Role', 'Azure Kubernetes Service Cluster Monitoring User', 'Azure Kubernetes Service Cluster User Role', 'Azure Kubernetes Service Contributor Role', 'Azure Kubernetes Service RBAC Admin', 'Azure Kubernetes Service RBAC Cluster Admin', 'Azure Kubernetes Service RBAC Reader', 'Azure Kubernetes Service RBAC Writer', 'Contributor', 'Kubernetes Agentless Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -524,7 +524,7 @@ class ContainerServiceManagedCluster(TypedDict, total=False):
     """Private DNS Zone configuration. Set to 'system' and AKS will create a private DNS zone in the node resource group. Set to '' to disable private DNS Zone creation and use public DNS. Supply the resource ID here of an existing Private DNS zone to use an existing zone."""
     publicNetworkAccess: Literal['Disabled', 'Enabled', 'SecuredByPerimeter']
     """Allow or deny public network access for AKS."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Azure Kubernetes Fleet Manager Contributor Role', 'Azure Kubernetes Fleet Manager RBAC Admin', 'Azure Kubernetes Fleet Manager RBAC Cluster Admin', 'Azure Kubernetes Fleet Manager RBAC Reader', 'Azure Kubernetes Fleet Manager RBAC Writer', 'Azure Kubernetes Service Cluster Admin Role', 'Azure Kubernetes Service Cluster Monitoring User', 'Azure Kubernetes Service Cluster User Role', 'Azure Kubernetes Service Contributor Role', 'Azure Kubernetes Service RBAC Admin', 'Azure Kubernetes Service RBAC Cluster Admin', 'Azure Kubernetes Service RBAC Reader', 'Azure Kubernetes Service RBAC Writer', 'Contributor', 'Kubernetes Agentless Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     serviceCidr: str
     """A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP ranges."""

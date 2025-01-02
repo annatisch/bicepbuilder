@@ -135,7 +135,8 @@ class BicepObject:
             name: str,
             module: str,
             resource: Optional[str] = None,
-            subresources: Optional[List['BicepObject']] = None
+            subresources: Optional[List['BicepObject']] = None,
+            type_info: Optional[Dict[str, str]] = None
     ):
         self.name = name
         self.module = module
@@ -150,6 +151,7 @@ class BicepObject:
         self.imports = []
         self.include = True
         self.outputs = None
+        self.type_info = type_info
 
 
     def _reset_current(self, name: Optional[str] = None):
@@ -160,6 +162,8 @@ class BicepObject:
             elif self._current_param.type == "Outputs":
                 self.outputs = self._current_param
             elif self._current_param.name:
+                if self.type_info and self._current_param.name in self.type_info:
+                    self._current_param.type = self.type_info[self._current_param.name]
                 self.parameters[self._current_param.name] = self._current_param
             new_models = self._current_param.close()
             self.objects.extend(new_models)
@@ -256,6 +260,7 @@ class Parameter:
         self.object = None
         self.uniontype = None
         self.include = True
+        self.type_info = None
 
     def add(self, node):
         if self.object:
@@ -270,7 +275,7 @@ class Parameter:
                 self.description = description
             if node.children[0].get_type() == "StrongEmphasis" and not self.object:
                 classname = class_name(self.parent.name, self.name)
-                self.object = BicepObject(name=classname, module=self.parent.module)
+                self.object = BicepObject(name=classname, module=self.parent.module, type_info=self.type_info)
                 self.object.description = self.description
                 if self.type == "List":
                     self.subtype = f"'{self.object.name}'"
@@ -290,7 +295,7 @@ class Parameter:
                         self.type = f"Literal[{', '.join([v.strip() for v in values])}]"
                     elif item.startswith('Roles configurable by name:'):
                         values = [v.children[0].children[0].children for v in listitem.children[1].children]
-                        self.uniontype = f"Literal[{', '.join(values)}]"
+                        self.type_info = {"roleDefinitionIdOrName": f"Union[str, Literal[{', '.join(values)}]]"}
     
     def close(self) -> List[BicepObject]:
         if self.object:

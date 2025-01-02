@@ -170,7 +170,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -216,7 +216,7 @@ class PrivateEndpoint(TypedDict, total=False):
     """The name of the private link connection to create."""
     resourceGroupName: str
     """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     service: str
     """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
@@ -228,7 +228,7 @@ class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
     """The principal ID of the principal (user/group/identity) to assign the role to."""
-    roleDefinitionIdOrName: Required[str]
+    roleDefinitionIdOrName: Required[Union[str, Literal['Cognitive Services Contributor', 'Cognitive Services Custom Vision Contributor', 'Cognitive Services Custom Vision Deployment', 'Cognitive Services Custom Vision Labeler', 'Cognitive Services Custom Vision Reader', 'Cognitive Services Custom Vision Trainer', 'Cognitive Services Data Reader (Preview)', 'Cognitive Services Face Recognizer', 'Cognitive Services Immersive Reader User', 'Cognitive Services Language Owner', 'Cognitive Services Language Reader', 'Cognitive Services Language Writer', 'Cognitive Services LUIS Owner', 'Cognitive Services LUIS Reader', 'Cognitive Services LUIS Writer', 'Cognitive Services Metrics Advisor Administrator', 'Cognitive Services Metrics Advisor User', 'Cognitive Services OpenAI Contributor', 'Cognitive Services OpenAI User', 'Cognitive Services QnA Maker Editor', 'Cognitive Services QnA Maker Reader', 'Cognitive Services Speech Contributor', 'Cognitive Services Speech User', 'Cognitive Services User', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
     """The role to assign. You can provide either the display name of the role definition, the role definition GUID, or its fully qualified ID in the following format: '/providers/Microsoft.Authorization/roleDefinitions/c2f4ef07-c644-48eb-af81-4b1b4947fb11'."""
     condition: str
     """The conditions on the role assignment. This limits the resources it can be assigned to. e.g.: @Resource[Microsoft.Storage/storageAccounts/blobServices/containers:ContainerName] StringEqualsIgnoreCase "foo_storage_container"."""
@@ -296,7 +296,7 @@ class CognitiveServicesAccount(TypedDict, total=False):
     """Restore a soft-deleted cognitive service at deployment time. Will fail if no such soft-deleted resource exists."""
     restrictOutboundNetworkAccess: bool
     """Restrict outbound network access."""
-    roleAssignments: List[Union['RoleAssignment', Literal['Cognitive Services Contributor', 'Cognitive Services Custom Vision Contributor', 'Cognitive Services Custom Vision Deployment', 'Cognitive Services Custom Vision Labeler', 'Cognitive Services Custom Vision Reader', 'Cognitive Services Custom Vision Trainer', 'Cognitive Services Data Reader (Preview)', 'Cognitive Services Face Recognizer', 'Cognitive Services Immersive Reader User', 'Cognitive Services Language Owner', 'Cognitive Services Language Reader', 'Cognitive Services Language Writer', 'Cognitive Services LUIS Owner', 'Cognitive Services LUIS Reader', 'Cognitive Services LUIS Writer', 'Cognitive Services Metrics Advisor Administrator', 'Cognitive Services Metrics Advisor User', 'Cognitive Services OpenAI Contributor', 'Cognitive Services OpenAI User', 'Cognitive Services QnA Maker Editor', 'Cognitive Services QnA Maker Reader', 'Cognitive Services Speech Contributor', 'Cognitive Services Speech User', 'Cognitive Services User', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    roleAssignments: List['RoleAssignment']
     """Array of role assignments to create."""
     secretsExportConfiguration: 'SecretsExportConfiguration'
     """Key vault reference and secret settings for the module's secrets export."""
