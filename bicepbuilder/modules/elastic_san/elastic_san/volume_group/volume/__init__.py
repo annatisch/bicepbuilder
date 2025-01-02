@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -32,6 +25,8 @@ class Volume(TypedDict, total=False):
     """Size of the Elastic SAN Volume in Gibibytes (GiB). The supported capacity ranges from 1 Gibibyte (GiB) to 64 Tebibyte (TiB), equating to 65536 Gibibytes (GiB)."""
     location: str
     """Location for all resources."""
+    snapshots: List['Snapshot']
+    """List of Elastic SAN Volume Snapshots to be created in the Elastic SAN Volume."""
 
 
 class VolumeOutputs(TypedDict, total=False):

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -26,12 +26,6 @@ class CustomDnsConfig(TypedDict, total=False):
     """FQDN that resolves to private endpoint IP address."""
 
 
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
-
-
 class IpConfigurationProperties(TypedDict, total=False):
     """Properties of private endpoint IP configurations."""
     groupId: Required[str]
@@ -42,18 +36,20 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class ManualPrivateLinkServiceConnection(TypedDict, total=False):
-    """A grouping of information about the connection to the remote resource. Used when the network admin does not have access to approve connections to the remote resource."""
-    name: Required[str]
-    """The name of the private link service connection."""
 
 
 class ManualPrivateLinkServiceConnectionProperties(TypedDict, total=False):
@@ -66,10 +62,12 @@ class ManualPrivateLinkServiceConnectionProperties(TypedDict, total=False):
     """A message passed to the owner of the remote resource with this connection request. Restricted to 140 chars."""
 
 
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS zone group to configure for the private endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
+class ManualPrivateLinkServiceConnection(TypedDict, total=False):
+    """A grouping of information about the connection to the remote resource. Used when the network admin does not have access to approve connections to the remote resource."""
+    name: Required[str]
+    """The name of the private link service connection."""
+    properties: Required['ManualPrivateLinkServiceConnectionProperties']
+    """Properties of private link service connection."""
 
 
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
@@ -80,10 +78,12 @@ class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The name of the private DNS zone group config."""
 
 
-class PrivateLinkServiceConnection(TypedDict, total=False):
-    """A grouping of information about the connection to the remote resource."""
-    name: Required[str]
-    """The name of the private link service connection."""
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS zone group to configure for the private endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS zone groups to associate the private endpoint. A DNS zone group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
 
 
 class PrivateLinkServiceConnectionProperties(TypedDict, total=False):
@@ -94,6 +94,14 @@ class PrivateLinkServiceConnectionProperties(TypedDict, total=False):
     """The resource id of private link service."""
     requestMessage: str
     """A message passed to the owner of the remote resource with this connection request. Restricted to 140 chars."""
+
+
+class PrivateLinkServiceConnection(TypedDict, total=False):
+    """A grouping of information about the connection to the remote resource."""
+    name: Required[str]
+    """The name of the private link service connection."""
+    properties: Required['PrivateLinkServiceConnectionProperties']
+    """Properties of private link service connection."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -116,7 +124,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
+class NetworkPrivateEndpoint(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the private endpoint resource to create."""
@@ -124,18 +132,32 @@ class PrivateEndpoint(TypedDict, total=False):
     """Resource ID of the subnet where the endpoint needs to be created."""
     applicationSecurityGroupResourceIds: List[object]
     """Application security groups in which the private endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
     customNetworkInterfaceName: str
     """The custom name of the network interface attached to the private endpoint."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    manualPrivateLinkServiceConnections: List['ManualPrivateLinkServiceConnection']
+    """A grouping of information about the connection to the remote resource. Used when the network admin does not have access to approve connections to the remote resource."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS zone group to configure for the private endpoint."""
+    privateLinkServiceConnections: List['PrivateLinkServiceConnection']
+    """A grouping of information about the connection to the remote resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags to be applied on all resources/resource groups in this deployment."""
 
 
-class PrivateEndpointOutputs(TypedDict, total=False):
-    """Outputs for PrivateEndpoint"""
+class NetworkPrivateEndpointOutputs(TypedDict, total=False):
+    """Outputs for NetworkPrivateEndpoint"""
     customDnsConfig: Output[Literal['array']]
     """The custom DNS configurations of the private endpoint."""
     groupId: Output[Literal['string']]
@@ -152,31 +174,28 @@ class PrivateEndpointOutputs(TypedDict, total=False):
     """The resource ID of the private endpoint."""
 
 
-class PrivateEndpointBicep(Module):
-    outputs: PrivateEndpointOutputs
+class NetworkPrivateEndpointBicep(Module):
+    outputs: NetworkPrivateEndpointOutputs
 
 
-def private_endpoint(
+def network_private_endpoint(
         bicep: IO[str],
+        params: NetworkPrivateEndpoint,
         /,
         *,
-        params: PrivateEndpoint,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.9.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/private-endpoint',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PrivateEndpointBicep:
-    symbol = "private_endpoint_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkPrivateEndpointBicep:
+    symbol = "network_private_endpoint_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/private-endpoint:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -189,7 +208,7 @@ def private_endpoint(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PrivateEndpointBicep(symbol)
+    output = NetworkPrivateEndpointBicep(symbol)
     output.outputs = {
             'customDnsConfig': Output(symbol, 'customDnsConfig', 'array'),
             'groupId': Output(symbol, 'groupId', 'string'),

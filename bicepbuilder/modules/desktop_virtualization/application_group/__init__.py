@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -21,24 +21,6 @@ if TYPE_CHECKING:
     from .application import Application
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -47,6 +29,26 @@ class LogCategoriesAndGroup(TypedDict, total=False):
     """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -77,7 +79,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ApplicationGroup(TypedDict, total=False):
+class DesktopVirtualizationApplicationGroup(TypedDict, total=False):
     """"""
     applicationGroupType: Required[Literal['Desktop', 'RemoteApp']]
     """The type of the Application Group to be created. Allowed values: RemoteApp or Desktop."""
@@ -89,18 +91,24 @@ class ApplicationGroup(TypedDict, total=False):
     """List of applications to be created in the Application Group."""
     description: str
     """Description of the application group."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     friendlyName: str
     """The friendly name of the Application Group to be created."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Owner', 'Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Application Group Contributor', 'Desktop Virtualization Application Group Contributor', 'Desktop Virtualization Application Group Reader', 'Desktop Virtualization Contributor', 'Desktop Virtualization Host Pool Contributor', 'Desktop Virtualization Host Pool Reader', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Reader', 'Desktop Virtualization Session Host Operator', 'Desktop Virtualization User', 'Desktop Virtualization User Session Operator', 'Desktop Virtualization Virtual Machine Contributor', 'Desktop Virtualization Workspace Contributor', 'Desktop Virtualization Workspace Reader', 'Managed Application Contributor Role', 'Managed Application Operator Role', 'Managed Applications Reader']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class ApplicationGroupOutputs(TypedDict, total=False):
-    """Outputs for ApplicationGroup"""
+class DesktopVirtualizationApplicationGroupOutputs(TypedDict, total=False):
+    """Outputs for DesktopVirtualizationApplicationGroup"""
     location: Output[Literal['string']]
     """The location of the scaling plan."""
     name: Output[Literal['string']]
@@ -111,31 +119,28 @@ class ApplicationGroupOutputs(TypedDict, total=False):
     """The resource ID of the scaling plan."""
 
 
-class ApplicationGroupBicep(Module):
-    outputs: ApplicationGroupOutputs
+class DesktopVirtualizationApplicationGroupBicep(Module):
+    outputs: DesktopVirtualizationApplicationGroupOutputs
 
 
-def application_group(
+def desktop_virtualization_application_group(
         bicep: IO[str],
+        params: DesktopVirtualizationApplicationGroup,
         /,
         *,
-        params: ApplicationGroup,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'desktop-virtualization/application-group',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ApplicationGroupBicep:
-    symbol = "application_group_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DesktopVirtualizationApplicationGroupBicep:
+    symbol = "desktop_virtualization_application_group_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/desktop-virtualization/application-group:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -148,7 +153,7 @@ def application_group(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ApplicationGroupBicep(symbol)
+    output = DesktopVirtualizationApplicationGroupBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

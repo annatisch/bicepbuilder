@@ -30,6 +30,7 @@ class MarkdownNode(Protocol):
 
 class ResourceMap(MarkdownNode):
     type: str = "ResourceMap"
+    name: str = "ResourceMap"
     resources: Dict[str, str]
     versions: Dict[str, str]
 
@@ -112,6 +113,7 @@ class BicepObject:
     objects: List['BicepObject']
     module: str
     imports: List['BicepObject']
+    include: bool
 
 
     def __str__(self):
@@ -146,6 +148,8 @@ class BicepObject:
         self._current_param: Optional[Parameter] = None
         self.subresources = {r.name: r for r in subresources} if subresources else {}
         self.imports = []
+        self.include = True
+        self.outputs = None
 
 
     def _reset_current(self, name: Optional[str] = None):
@@ -155,11 +159,8 @@ class BicepObject:
                 self.version = self.map.versions.get(self.resource)
             elif self._current_param.type == "Outputs":
                 self.outputs = self._current_param
-            elif self._current_param.object:
-                self.objects.append(self._current_param.object)
             elif self._current_param.name:
                 self.parameters[self._current_param.name] = self._current_param
-
             new_models = self._current_param.close()
             self.objects.extend(new_models)
         if name:
@@ -187,6 +188,9 @@ class BicepObject:
                         if classname == self.name:
                             self._reset_current(param_name.split('.')[-1])
                         else:
+                            if "<" in param_name:
+                                if classname == self._current_param.object.name:
+                                    self._current_param.object.include = False
                             self._current_param.add(node)
                     else:
                         self._reset_current(param_name)
@@ -231,10 +235,6 @@ class Parameter:
                 type_str = "Dict[str, object]"
         else:
             type_str = self.type
-        #if self.uniontype:
-        #    type_str = f"Union[{type_str}, {self.uniontype}]"
-        #if not self.required:
-        #    type_str = f"Optional[{type_str}] = None"
         return type_str
 
     def __str__(self) -> str:
@@ -294,7 +294,12 @@ class Parameter:
     
     def close(self) -> List[BicepObject]:
         if self.object:
-            return self.object.close()
+            if self.object.include:
+                objects = self.object.close()
+                objects.append(self.object)
+                return objects
+            else:
+                self.type = "Dict[str, object]"
         if self.type == "List" and not self.subtype:
             classname = singular_class_name(self.name)
             if classname in self.parent.subresources:

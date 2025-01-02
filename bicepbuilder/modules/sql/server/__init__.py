@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -58,6 +58,84 @@ class AuditSetting(TypedDict, total=False):
     """Specifies the identifier key of the auditing storage account."""
 
 
+class BackupLongTermRetentionPolicy(TypedDict, total=False):
+    """The long term backup retention policy for the database."""
+    backupStorageAccessTier: Literal['Archive', 'Hot']
+    """The BackupStorageAccessTier for the LTR backups."""
+    makeBackupsImmutable: bool
+    """The setting whether to make LTR backups immutable."""
+    monthlyRetention: str
+    """Monthly retention in ISO 8601 duration format."""
+    weeklyRetention: str
+    """Weekly retention in ISO 8601 duration format."""
+    weekOfYear: int
+    """Week of year backup to keep for yearly retention."""
+    yearlyRetention: str
+    """Yearly retention in ISO 8601 duration format."""
+
+
+class BackupShortTermRetentionPolicy(TypedDict, total=False):
+    """The short term backup retention policy for the database."""
+    diffBackupIntervalInHours: int
+    """Differential backup interval in hours. For Hyperscale tiers this value will be ignored."""
+    retentionDays: int
+    """Point-in-time retention in days."""
+
+
+class LogCategoriesAndGroup(TypedDict, total=False):
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    category: str
+    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
+    categoryGroup: str
+    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
+
+
+class MetricCategory(TypedDict, total=False):
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    category: Required[str]
+    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
+class Sku(TypedDict, total=False):
+    """The database SKU."""
+    name: Required[str]
+    """The name of the SKU, typically, a letter + Number code, e.g. P3."""
+    capacity: int
+    """The capacity of the particular SKU."""
+    family: str
+    """If the service has different generations of hardware, for the same SKU, then that can be captured here."""
+    size: str
+    """Size of the particular SKU."""
+    tier: str
+    """The tier or edition of the particular SKU, e.g. Basic, Premium."""
+
+
 class Database(TypedDict, total=False):
     """The databases to create in the server."""
     name: Required[str]
@@ -66,12 +144,18 @@ class Database(TypedDict, total=False):
     """Time in minutes after which database is automatically paused. A value of -1 means that automatic pause is disabled."""
     availabilityZone: Literal['1', '2', '3', 'NoPreference']
     """Specifies the availability zone the database is pinned to."""
+    backupLongTermRetentionPolicy: 'BackupLongTermRetentionPolicy'
+    """The long term backup retention policy for the database."""
+    backupShortTermRetentionPolicy: 'BackupShortTermRetentionPolicy'
+    """The short term backup retention policy for the database."""
     catalogCollation: str
     """Collation of the metadata catalog."""
     collation: str
     """The collation of the database."""
     createMode: Literal['Copy', 'Default', 'OnlineSecondary', 'PointInTimeRestore', 'Recovery', 'Restore', 'RestoreExternalBackup', 'RestoreExternalBackupSecondary', 'RestoreLongTermRetentionBackup', 'Secondary']
     """Specifies the mode of database creation."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     elasticPoolResourceId: str
     """The resource identifier of the elastic pool containing this database."""
     encryptionProtector: str
@@ -118,6 +202,8 @@ class Database(TypedDict, total=False):
     """The name of the sample schema to apply when creating this database."""
     secondaryType: Literal['Geo', 'Named', 'Standby']
     """The secondary type of the database if it is a secondary."""
+    sku: 'Sku'
+    """The database SKU."""
     sourceDatabaseDeletionDate: str
     """Specifies the time that the database was deleted."""
     sourceDatabaseResourceId: str
@@ -132,69 +218,19 @@ class Database(TypedDict, total=False):
     """Whether or not this database is zone redundant, which means the replicas of this database will be spread across multiple availability zones."""
 
 
-class BackupLongTermRetentionPolicy(TypedDict, total=False):
-    """The long term backup retention policy for the database."""
-    backupStorageAccessTier: Literal['Archive', 'Hot']
-    """The BackupStorageAccessTier for the LTR backups."""
-    makeBackupsImmutable: bool
-    """The setting whether to make LTR backups immutable."""
-    monthlyRetention: str
-    """Monthly retention in ISO 8601 duration format."""
-    weeklyRetention: str
-    """Weekly retention in ISO 8601 duration format."""
-    weekOfYear: int
-    """Week of year backup to keep for yearly retention."""
-    yearlyRetention: str
-    """Yearly retention in ISO 8601 duration format."""
-
-
-class BackupShortTermRetentionPolicy(TypedDict, total=False):
-    """The short term backup retention policy for the database."""
-    diffBackupIntervalInHours: int
-    """Differential backup interval in hours. For Hyperscale tiers this value will be ignored."""
-    retentionDays: int
-    """Point-in-time retention in days."""
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
-class LogCategoriesAndGroup(TypedDict, total=False):
-    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
-    category: str
-    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
-    categoryGroup: str
-    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to """
-    enabled: bool
-    """Enable or disable the category explicitly. Default is """
-
-
-class MetricCategory(TypedDict, total=False):
-    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
-    category: Required[str]
-    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
-    enabled: bool
-    """Enable or disable the category explicitly. Default is """
+class PerDatabaseSetting(TypedDict, total=False):
+    """The per database settings for the elastic pool."""
+    maxCapacity: Required[str]
+    """The maximum capacity any one database can consume. Examples: '0.5', '2'."""
+    minCapacity: Required[str]
+    """The minimum capacity all databases are guaranteed. Examples: '0.5', '1'."""
+    autoPauseDelay: int
+    """Auto Pause Delay for per database within pool."""
 
 
 class Sku(TypedDict, total=False):
-    """The database SKU."""
-    name: Required[str]
+    """The elastic pool SKU."""
+    name: Required[Literal['BasicPool', 'BC_DC', 'BC_Gen5', 'GP_DC', 'GP_FSv2', 'GP_Gen5', 'HS_Gen5', 'HS_MOPRMS', 'HS_PRMS', 'PremiumPool', 'ServerlessPool', 'StandardPool']]
     """The name of the SKU, typically, a letter + Number code, e.g. P3."""
     capacity: int
     """The capacity of the particular SKU."""
@@ -224,36 +260,16 @@ class ElasticPool(TypedDict, total=False):
     """The storage limit for the database elastic pool in bytes."""
     minCapacity: int
     """Minimal capacity that serverless pool will not shrink below, if not paused."""
+    perDatabaseSettings: 'PerDatabaseSetting'
+    """The per database settings for the elastic pool."""
     preferredEnclaveType: Literal['Default', 'VBS']
     """Type of enclave requested on the elastic pool."""
+    sku: 'Sku'
+    """The elastic pool SKU."""
     tags: Dict[str, object]
     """Tags of the resource."""
     zoneRedundant: bool
     """Whether or not this elastic pool is zone redundant, which means the replicas of this elastic pool will be spread across multiple availability zones."""
-
-
-class PerDatabaseSetting(TypedDict, total=False):
-    """The per database settings for the elastic pool."""
-    maxCapacity: Required[str]
-    """The maximum capacity any one database can consume. Examples: '0.5', '2'."""
-    minCapacity: Required[str]
-    """The minimum capacity all databases are guaranteed. Examples: '0.5', '1'."""
-    autoPauseDelay: int
-    """Auto Pause Delay for per database within pool."""
-
-
-class Sku(TypedDict, total=False):
-    """The elastic pool SKU."""
-    name: Required[Literal['BasicPool', 'BC_DC', 'BC_Gen5', 'GP_DC', 'GP_FSv2', 'GP_Gen5', 'HS_Gen5', 'HS_MOPRMS', 'HS_PRMS', 'PremiumPool', 'ServerlessPool', 'StandardPool']]
-    """The name of the SKU, typically, a letter + Number code, e.g. P3."""
-    capacity: int
-    """The capacity of the particular SKU."""
-    family: str
-    """If the service has different generations of hardware, for the same SKU, then that can be captured here."""
-    size: str
-    """Size of the particular SKU."""
-    tier: str
-    """The tier or edition of the particular SKU, e.g. Basic, Premium."""
 
 
 class EncryptionProtectorObj(TypedDict, total=False):
@@ -302,46 +318,12 @@ class ManagedIdentity(TypedDict, total=False):
     """The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the Private Endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the Private Endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the Private Endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the Private Endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
-    service: str
-    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/Resource Groups in this deployment."""
-
-
 class CustomDnsConfig(TypedDict, total=False):
     """Custom DNS configurations."""
     ipAddresses: Required[List[object]]
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -354,6 +336,14 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -362,18 +352,20 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS Zone Group to configure for the Private Endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
-
-
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
     privateDnsZoneResourceId: Required[str]
     """The resource id of the private DNS zone."""
     name: str
     """The name of the private DNS Zone Group config."""
+
+
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -394,6 +386,44 @@ class RoleAssignment(TypedDict, total=False):
     """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
     principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
     """The principal type of the assigned principal ID."""
+
+
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the Private Endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the Private Endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the Private Endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the Private Endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    """Array of role assignments to create."""
+    service: str
+    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/Resource Groups in this deployment."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -456,18 +486,6 @@ class VirtualNetworkRule(TypedDict, total=False):
     """Allow creating a firewall rule before the virtual network has vnet service endpoint enabled."""
 
 
-class VulnerabilityAssessmentsObj(TypedDict, total=False):
-    """The vulnerability assessment configuration."""
-    name: Required[str]
-    """The name of the vulnerability assessment."""
-    storageAccountResourceId: Required[str]
-    """The resource ID of the storage account to store the scan reports."""
-    createStorageRoleAssignment: bool
-    """Specifies whether to create a role assignment for the storage account."""
-    useStorageAccountAccessKey: bool
-    """Specifies whether to use the storage account access key to access the storage account."""
-
-
 class RecurringScan(TypedDict, total=False):
     """The recurring scans settings."""
     emails: Required[List[object]]
@@ -478,7 +496,21 @@ class RecurringScan(TypedDict, total=False):
     """Recurring scans state."""
 
 
-class Server(TypedDict, total=False):
+class VulnerabilityAssessmentsObj(TypedDict, total=False):
+    """The vulnerability assessment configuration."""
+    name: Required[str]
+    """The name of the vulnerability assessment."""
+    storageAccountResourceId: Required[str]
+    """The resource ID of the storage account to store the scan reports."""
+    createStorageRoleAssignment: bool
+    """Specifies whether to create a role assignment for the storage account."""
+    recurringScans: 'RecurringScan'
+    """The recurring scans settings."""
+    useStorageAccountAccessKey: bool
+    """Specifies whether to use the storage account access key to access the storage account."""
+
+
+class SqlServer(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the server."""
@@ -486,30 +518,60 @@ class Server(TypedDict, total=False):
     """The administrator username for the server. Required if no """
     administratorLoginPassword: str
     """The administrator login password. Required if no """
+    administrators: 'Administrator'
+    """The Azure Active Directory (AAD) administrator authentication. Required if no """
     primaryUserAssignedIdentityId: str
     """The resource ID of a user assigned identity to be used by default. Required if "userAssignedIdentities" is not empty."""
+    auditSettings: 'AuditSetting'
+    """The audit settings configuration."""
+    databases: List['Database']
+    """The databases to create in the server."""
+    elasticPools: List['ElasticPool']
+    """The Elastic Pools to create in the server."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    encryptionProtectorObj: 'EncryptionProtectorObj'
+    """The encryption protection configuration."""
     federatedClientId: str
     """The Client id used for cross tenant CMK scenario."""
+    firewallRules: List['FirewallRule']
+    """The firewall rules to create in the server."""
     isIPv6Enabled: Literal['Disabled', 'Enabled']
     """Whether or not to enable IPv6 support for this server."""
     keyId: str
     """A CMK URI of the key to use for encryption."""
+    keys: List['Key']
+    """The keys to configure."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     minimalTlsVersion: Literal['1.0', '1.1', '1.2', '1.3']
     """Minimal TLS version allowed."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
     publicNetworkAccess: Literal['', 'Disabled', 'Enabled', 'SecuredByPerimeter']
     """Whether or not public network access is allowed for this resource. For security reasons it should be disabled. If not specified, it will be disabled by default if private endpoints are set and neither firewall rules nor virtual network rules are set."""
     restrictOutboundNetworkAccess: Literal['', 'Disabled', 'Enabled']
     """Whether or not to restrict outbound network access for this server."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reservation Purchaser', 'Role Based Access Control Administrator', 'SQL DB Contributor', 'SQL Managed Instance Contributor', 'SQL Security Manager', 'SQL Server Contributor', 'SqlDb Migration Role', 'SqlMI Migration Role', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    secretsExportConfiguration: 'SecretsExportConfiguration'
+    """Key vault reference and secret settings for the module's secrets export."""
+    securityAlertPolicies: List['SecurityAlertPolicy']
+    """The security alert policies to create in the server."""
     tags: Dict[str, object]
     """Tags of the resource."""
+    virtualNetworkRules: List['VirtualNetworkRule']
+    """The virtual network rules to create in the server."""
+    vulnerabilityAssessmentsObj: 'VulnerabilityAssessmentsObj'
+    """The vulnerability assessment configuration."""
 
 
-class ServerOutputs(TypedDict, total=False):
-    """Outputs for Server"""
+class SqlServerOutputs(TypedDict, total=False):
+    """Outputs for SqlServer"""
     exportedSecrets: Output[Literal['object']]
     """A hashtable of references to the secrets exported to the provided Key Vault. The key of each reference is each secret's name."""
     fullyQualifiedDomainName: Output[Literal['string']]
@@ -528,31 +590,28 @@ class ServerOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ServerBicep(Module):
-    outputs: ServerOutputs
+class SqlServerBicep(Module):
+    outputs: SqlServerOutputs
 
 
-def server(
+def sql_server(
         bicep: IO[str],
+        params: SqlServer,
         /,
         *,
-        params: Server,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.11.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'sql/server',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ServerBicep:
-    symbol = "server_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> SqlServerBicep:
+    symbol = "sql_server_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/sql/server:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -565,7 +624,7 @@ def server(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ServerBicep(symbol)
+    output = SqlServerBicep(symbol)
     output.outputs = {
             'exportedSecrets': Output(symbol, 'exportedSecrets', 'object'),
             'fullyQualifiedDomainName': Output(symbol, 'fullyQualifiedDomainName', 'string'),

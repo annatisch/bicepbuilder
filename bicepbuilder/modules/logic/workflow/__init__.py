@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,24 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -52,6 +34,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class IntegrationServiceEnvironment(TypedDict, total=False):
@@ -96,7 +100,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Workflow(TypedDict, total=False):
+class LogicWorkflow(TypedDict, total=False):
     """"""
     name: Required[str]
     """The logic app workflow name."""
@@ -108,12 +112,22 @@ class Workflow(TypedDict, total=False):
     """The access control configuration for accessing workflow run contents."""
     definitionParameters: Dict[str, object]
     """Parameters for the definition template."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     integrationAccount: Dict[str, object]
     """The integration account."""
+    integrationServiceEnvironment: 'IntegrationServiceEnvironment'
+    """The integration service environment settings."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. Only one type of identity is supported: system-assigned or user-assigned, but not both."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Logic App Contributor', 'Logic App Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     state: Literal['Completed', 'Deleted', 'Disabled', 'Enabled', 'NotSpecified', 'Suspended']
     """The state. - NotSpecified, Completed, Enabled, Disabled, Deleted, Suspended."""
     tags: Dict[str, object]
@@ -136,8 +150,8 @@ class Workflow(TypedDict, total=False):
     """The definitions for one or more triggers that instantiate your workflow. You can define more than one trigger, but only with the Workflow Definition Language, not visually through the Logic Apps Designer."""
 
 
-class WorkflowOutputs(TypedDict, total=False):
-    """Outputs for Workflow"""
+class LogicWorkflowOutputs(TypedDict, total=False):
+    """Outputs for LogicWorkflow"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -150,31 +164,28 @@ class WorkflowOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class WorkflowBicep(Module):
-    outputs: WorkflowOutputs
+class LogicWorkflowBicep(Module):
+    outputs: LogicWorkflowOutputs
 
 
-def workflow(
+def logic_workflow(
         bicep: IO[str],
+        params: LogicWorkflow,
         /,
         *,
-        params: Workflow,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'logic/workflow',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> WorkflowBicep:
-    symbol = "workflow_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> LogicWorkflowBicep:
+    symbol = "logic_workflow_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/logic/workflow:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -187,7 +198,7 @@ def workflow(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = WorkflowBicep(symbol)
+    output = LogicWorkflowBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

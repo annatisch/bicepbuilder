@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -82,6 +75,8 @@ class VCPU(TypedDict, total=False):
 
 class Image(TypedDict, total=False):
     """"""
+    identifier: Required['Identifier']
+    """This is the gallery image definition identifier."""
     name: Required[str]
     """Name of the image definition."""
     osState: Required[Literal['Generalized', 'Specialized']]
@@ -92,6 +87,8 @@ class Image(TypedDict, total=False):
     """The architecture of the image. Applicable to OS disks only."""
     description: str
     """The description of this gallery image definition resource. This property is updatable."""
+    disallowed: 'Disallowed'
+    """Describes the disallowed disk types."""
     endOfLifeDate: str
     """The end of life date of the gallery image definition. This property can be used for decommissioning purposes. This property is updatable."""
     eula: str
@@ -104,14 +101,22 @@ class Image(TypedDict, total=False):
     """Specifiy if the image supports hibernation."""
     location: str
     """Location for all resources."""
+    memory: 'Memory'
+    """Describes the resource range (1-4000 GB RAM)."""
     privacyStatementUri: str
     """The privacy statement uri."""
+    purchasePlan: 'PurchasePlan'
+    """Describes the gallery image definition purchase plan. This is used by marketplace images."""
     releaseNoteUri: str
     """The release note uri. Has to be a valid URL."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     securityType: Literal['ConfidentialVM', 'ConfidentialVMSupported', 'Standard', 'TrustedLaunch', 'TrustedLaunchAndConfidentialVmSupported', 'TrustedLaunchSupported']
     """The security type of the image. Requires a hyperVGeneration V2."""
     tags: Dict[str, object]
     """Tags for all the image."""
+    vCPUs: 'VCPU'
+    """Describes the resource range (1-128 CPU cores)."""
 
 
 class ImageOutputs(TypedDict, total=False):

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class LocalNetworkGateway(TypedDict, total=False):
+class NetworkLocalNetworkGateway(TypedDict, total=False):
     """"""
     localAddressPrefixes: Required[List[object]]
     """List of the local (on-premises) IP address ranges."""
@@ -66,12 +66,16 @@ class LocalNetworkGateway(TypedDict, total=False):
     """The weight added to routes learned from this BGP speaker. This will only take effect if both the localAsn and the localBgpPeeringAddress values are provided."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class LocalNetworkGatewayOutputs(TypedDict, total=False):
-    """Outputs for LocalNetworkGateway"""
+class NetworkLocalNetworkGatewayOutputs(TypedDict, total=False):
+    """Outputs for NetworkLocalNetworkGateway"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -82,31 +86,28 @@ class LocalNetworkGatewayOutputs(TypedDict, total=False):
     """The resource ID of the local network gateway."""
 
 
-class LocalNetworkGatewayBicep(Module):
-    outputs: LocalNetworkGatewayOutputs
+class NetworkLocalNetworkGatewayBicep(Module):
+    outputs: NetworkLocalNetworkGatewayOutputs
 
 
-def local_network_gateway(
+def network_local_network_gateway(
         bicep: IO[str],
+        params: NetworkLocalNetworkGateway,
         /,
         *,
-        params: LocalNetworkGateway,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/local-network-gateway',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> LocalNetworkGatewayBicep:
-    symbol = "local_network_gateway_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkLocalNetworkGatewayBicep:
+    symbol = "network_local_network_gateway_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/local-network-gateway:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -119,7 +120,7 @@ def local_network_gateway(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = LocalNetworkGatewayBicep(symbol)
+    output = NetworkLocalNetworkGatewayBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

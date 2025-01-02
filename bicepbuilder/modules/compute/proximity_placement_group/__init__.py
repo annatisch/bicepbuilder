@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ProximityPlacementGroup(TypedDict, total=False):
+class ComputeProximityPlacementGroup(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the proximity placement group that is being created."""
@@ -58,6 +58,10 @@ class ProximityPlacementGroup(TypedDict, total=False):
     """Specifies the user intent of the proximity placement group."""
     location: str
     """Resource location."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the proximity placement group resource."""
     type: Literal['Standard', 'Ultra']
@@ -66,8 +70,8 @@ class ProximityPlacementGroup(TypedDict, total=False):
     """Specifies the Availability Zone where virtual machine, virtual machine scale set or availability set associated with the proximity placement group can be created."""
 
 
-class ProximityPlacementGroupOutputs(TypedDict, total=False):
-    """Outputs for ProximityPlacementGroup"""
+class ComputeProximityPlacementGroupOutputs(TypedDict, total=False):
+    """Outputs for ComputeProximityPlacementGroup"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -78,31 +82,28 @@ class ProximityPlacementGroupOutputs(TypedDict, total=False):
     """The resourceId the proximity placement group."""
 
 
-class ProximityPlacementGroupBicep(Module):
-    outputs: ProximityPlacementGroupOutputs
+class ComputeProximityPlacementGroupBicep(Module):
+    outputs: ComputeProximityPlacementGroupOutputs
 
 
-def proximity_placement_group(
+def compute_proximity_placement_group(
         bicep: IO[str],
+        params: ComputeProximityPlacementGroup,
         /,
         *,
-        params: ProximityPlacementGroup,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/proximity-placement-group',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ProximityPlacementGroupBicep:
-    symbol = "proximity_placement_group_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeProximityPlacementGroupBicep:
+    symbol = "compute_proximity_placement_group_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/proximity-placement-group:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -115,7 +116,7 @@ def proximity_placement_group(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ProximityPlacementGroupBicep(symbol)
+    output = ComputeProximityPlacementGroupBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

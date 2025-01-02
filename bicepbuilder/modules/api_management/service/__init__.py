@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -32,24 +32,6 @@ if TYPE_CHECKING:
     from .subscription import Subscription
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -66,6 +48,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -104,7 +108,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Service(TypedDict, total=False):
+class ApiManagementService(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the API Management service."""
@@ -132,6 +136,8 @@ class Service(TypedDict, total=False):
     """List of Certificates that need to be installed in the API Management service. Max supported certificates that can be installed is 10."""
     customProperties: Dict[str, object]
     """Custom properties of the API Management service. Not supported if SKU is Consumption."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableGateway: bool
     """Property only valid for an API Management service deployed in multiple locations. This can be used to disable the gateway in master region."""
     enableClientCertificate: bool
@@ -144,8 +150,12 @@ class Service(TypedDict, total=False):
     """Identity providers."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     loggers: List['Logger']
     """Loggers."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     minApiVersion: str
     """Limit control plane API calls to API Management service with version equal to or newer than this value."""
     namedValues: List['NamedValue']
@@ -164,6 +174,8 @@ class Service(TypedDict, total=False):
     """Public Standard SKU IP V4 based IP address to be associated with Virtual Network deployed service in the region. Supported only for Developer and Premium SKU being deployed in Virtual Network."""
     restore: bool
     """Undelete API Management Service if it was previously soft-deleted. If this flag is specified and set to True all other properties will be ignored."""
+    roleAssignments: List[Union['RoleAssignment', Literal['API Management Developer Portal Content Editor', 'API Management Service Contributor', 'API Management Service Operator Role', 'API Management Service Reader Role', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     sku: Literal['Basic', 'BasicV2', 'Consumption', 'Developer', 'Premium', 'Standard', 'StandardV2']
     """The pricing tier of this API Management service."""
     subnetResourceId: str
@@ -178,8 +190,8 @@ class Service(TypedDict, total=False):
     """A list of availability zones denoting where the resource needs to come from. Only supported by Premium sku."""
 
 
-class ServiceOutputs(TypedDict, total=False):
-    """Outputs for Service"""
+class ApiManagementServiceOutputs(TypedDict, total=False):
+    """Outputs for ApiManagementService"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -192,31 +204,28 @@ class ServiceOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ServiceBicep(Module):
-    outputs: ServiceOutputs
+class ApiManagementServiceBicep(Module):
+    outputs: ApiManagementServiceOutputs
 
 
-def service(
+def api_management_service(
         bicep: IO[str],
+        params: ApiManagementService,
         /,
         *,
-        params: Service,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.6.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'api-management/service',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ServiceBicep:
-    symbol = "service_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ApiManagementServiceBicep:
+    symbol = "api_management_service_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/api-management/service:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -229,7 +238,7 @@ def service(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ServiceBicep(symbol)
+    output = ApiManagementServiceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

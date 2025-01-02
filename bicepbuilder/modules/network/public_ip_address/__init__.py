@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,34 +18,18 @@ from ..expressions import (
 )
 
 
-class DdosSetting(TypedDict, total=False):
-    """The DDoS protection plan configuration associated with the public IP address."""
-    protectionMode: Required[Literal['Enabled']]
-    """The DDoS protection policy customizations."""
-
-
 class DdosProtectionPlan(TypedDict, total=False):
     """The DDoS protection plan associated with the public IP address."""
     id: Required[str]
     """The resource ID of the DDOS protection plan associated with the public IP address."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+class DdosSetting(TypedDict, total=False):
+    """The DDoS protection plan configuration associated with the public IP address."""
+    protectionMode: Required[Literal['Enabled']]
+    """The DDoS protection policy customizations."""
+    ddosProtectionPlan: 'DdosProtectionPlan'
+    """The DDoS protection plan associated with the public IP address."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -64,6 +48,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class DnsSetting(TypedDict, total=False):
@@ -114,22 +120,34 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class PublicIpAddre(TypedDict, total=False):
+class NetworkPublicIpAddress(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the Public IP Address."""
+    ddosSettings: 'DdosSetting'
+    """The DDoS protection plan configuration associated with the public IP address."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
+    dnsSettings: 'DnsSetting'
+    """The DNS settings of the public IP address."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     idleTimeoutInMinutes: int
     """The idle timeout of the public IP address."""
+    ipTags: List['IpTag']
+    """The list of tags associated with the public IP address."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     publicIPAddressVersion: Literal['IPv4', 'IPv6']
     """IP address version."""
     publicIPAllocationMethod: Literal['Dynamic', 'Static']
     """The public IP address allocation method."""
     publicIpPrefixResourceId: str
     """Resource ID of the Public IP Prefix object. This is only needed if you want your Public IPs created in a PIP Prefix."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
     skuName: Literal['Basic', 'Standard']
     """Name of a public IP address SKU."""
     skuTier: Literal['Global', 'Regional']
@@ -140,8 +158,8 @@ class PublicIpAddre(TypedDict, total=False):
     """A list of availability zones denoting the IP allocated for the resource needs to come from."""
 
 
-class PublicIpAddreOutputs(TypedDict, total=False):
-    """Outputs for PublicIpAddre"""
+class NetworkPublicIpAddressOutputs(TypedDict, total=False):
+    """Outputs for NetworkPublicIpAddress"""
     ipAddress: Output[Literal['string']]
     """The public IP address of the public IP address resource."""
     location: Output[Literal['string']]
@@ -154,31 +172,28 @@ class PublicIpAddreOutputs(TypedDict, total=False):
     """The resource ID of the public IP address."""
 
 
-class PublicIpAddreBicep(Module):
-    outputs: PublicIpAddreOutputs
+class NetworkPublicIpAddressBicep(Module):
+    outputs: NetworkPublicIpAddressOutputs
 
 
-def public_ip_address(
+def network_public_ip_address(
         bicep: IO[str],
+        params: NetworkPublicIpAddress,
         /,
         *,
-        params: PublicIpAddre,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.7.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/public-ip-address',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PublicIpAddreBicep:
-    symbol = "public_ip_address_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkPublicIpAddressBicep:
+    symbol = "network_public_ip_address_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/public-ip-address:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -191,7 +206,7 @@ def public_ip_address(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PublicIpAddreBicep(symbol)
+    output = NetworkPublicIpAddressBicep(symbol)
     output.outputs = {
             'ipAddress': Output(symbol, 'ipAddress', 'string'),
             'location': Output(symbol, 'location', 'string'),

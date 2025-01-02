@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -55,7 +55,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class FirewallPolicy(TypedDict, total=False):
+class NetworkFirewallPolicy(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Firewall Policy."""
@@ -85,12 +85,18 @@ class FirewallPolicy(TypedDict, total=False):
     """Secret ID of (base-64 encoded unencrypted PFX) Secret or Certificate object stored in KeyVault."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     mode: Literal['Alert', 'Deny', 'Off']
     """The configuring of intrusion detection."""
     privateRanges: List[object]
     """List of private IP addresses/IP address ranges to not be SNAT."""
     retentionDays: int
     """Number of days the insights should be enabled on the policy."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ruleCollectionGroups: List['RuleCollectionGroup']
     """Rule collection groups."""
     servers: List[object]
@@ -107,8 +113,8 @@ class FirewallPolicy(TypedDict, total=False):
     """List of workspaces for Firewall Policy Insights."""
 
 
-class FirewallPolicyOutputs(TypedDict, total=False):
-    """Outputs for FirewallPolicy"""
+class NetworkFirewallPolicyOutputs(TypedDict, total=False):
+    """Outputs for NetworkFirewallPolicy"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -119,31 +125,28 @@ class FirewallPolicyOutputs(TypedDict, total=False):
     """The resource ID of the deployed firewall policy."""
 
 
-class FirewallPolicyBicep(Module):
-    outputs: FirewallPolicyOutputs
+class NetworkFirewallPolicyBicep(Module):
+    outputs: NetworkFirewallPolicyOutputs
 
 
-def firewall_policy(
+def network_firewall_policy(
         bicep: IO[str],
+        params: NetworkFirewallPolicy,
         /,
         *,
-        params: FirewallPolicy,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/firewall-policy',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> FirewallPolicyBicep:
-    symbol = "firewall_policy_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkFirewallPolicyBicep:
+    symbol = "network_firewall_policy_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/firewall-policy:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -156,7 +159,7 @@ def firewall_policy(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = FirewallPolicyBicep(symbol)
+    output = NetworkFirewallPolicyBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

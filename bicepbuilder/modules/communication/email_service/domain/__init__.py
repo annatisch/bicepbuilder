@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -57,6 +50,10 @@ class Domain(TypedDict, total=False):
     """Describes how the Domain resource is being managed."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     senderUsernames: List['SenderUsername']
     """The domains to deploy into this namespace."""
     tags: Dict[str, object]

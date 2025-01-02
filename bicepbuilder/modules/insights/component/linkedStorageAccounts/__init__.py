@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -40,26 +33,23 @@ class LinkedstorageaccountBicep(Module):
 
 def linkedStorageAccounts(
         bicep: IO[str],
+        params: Linkedstorageaccount,
         /,
         *,
-        params: Linkedstorageaccount,
-        scope: Optional[BicepExpression] = None,
         app_insights_name: Union[str, BicepExpression],
+        scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/component/linkedStorageAccounts',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
 ) -> LinkedstorageaccountBicep:
     symbol = "linkedStorageAccounts_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/component/linkedStorageAccounts:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")

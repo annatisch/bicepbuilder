@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -28,12 +28,6 @@ class Image(TypedDict, total=False):
     """List of aliases to reference the image by."""
     buffer: str
     """The percentage of the buffer to be allocated to this image."""
-
-
-class OrganizationProfile(TypedDict, total=False):
-    """Defines the organization in which the pool will be used."""
-    kind: Required[Literal['AzureDevOps']]
-    """Azure DevOps organization profile."""
 
 
 class Organization(TypedDict, total=False):
@@ -56,22 +50,14 @@ class PermissionProfile(TypedDict, total=False):
     """User email addresses."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+class OrganizationProfile(TypedDict, total=False):
+    """Defines the organization in which the pool will be used."""
+    kind: Required[Literal['AzureDevOps']]
+    """Azure DevOps organization profile."""
+    organizations: Required[List['Organization']]
+    """The list of Azure DevOps organizations the pool should be present in.."""
+    permissionProfile: 'PermissionProfile'
+    """The type of permission which determines which accounts are admins on the Azure DevOps pool."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -92,6 +78,28 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -108,12 +116,6 @@ class ManagedIdentity(TypedDict, total=False):
     """The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."""
 
 
-class OsProfile(TypedDict, total=False):
-    """The OS profile of the agents in the pool."""
-    logonType: Required[Literal['Interactive', 'Service']]
-    """The logon type of the machine."""
-
-
 class SecretsManagementSetting(TypedDict, total=False):
     """The secret management settings of the machines in the pool."""
     keyExportable: Required[bool]
@@ -122,6 +124,14 @@ class SecretsManagementSetting(TypedDict, total=False):
     """The list of certificates to install on all machines in the pool."""
     certificateStoreLocation: str
     """Where to store certificates on the machine."""
+
+
+class OsProfile(TypedDict, total=False):
+    """The OS profile of the agents in the pool."""
+    logonType: Required[Literal['Interactive', 'Service']]
+    """The logon type of the machine."""
+    secretsManagementSettings: 'SecretsManagementSetting'
+    """The secret management settings of the machines in the pool."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -144,12 +154,6 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class StorageProfile(TypedDict, total=False):
-    """The storage profile of the machines in the pool."""
-    osDiskStorageAccountType: Literal['Premium', 'Standard', 'StandardSSD']
-    """The Azure SKU name of the machines in the pool."""
-
-
 class DataDisk(TypedDict, total=False):
     """A list of empty data disks to attach."""
     caching: Literal['None', 'ReadOnly', 'ReadWrite']
@@ -162,7 +166,15 @@ class DataDisk(TypedDict, total=False):
     """The storage Account type to be used for the data disk. If omitted, the default is Standard_LRS."""
 
 
-class Pool(TypedDict, total=False):
+class StorageProfile(TypedDict, total=False):
+    """The storage profile of the machines in the pool."""
+    dataDisks: List['DataDisk']
+    """A list of empty data disks to attach."""
+    osDiskStorageAccountType: Literal['Premium', 'Standard', 'StandardSSD']
+    """The Azure SKU name of the machines in the pool."""
+
+
+class DevOpsInfrastructurePool(TypedDict, total=False):
     """"""
     agentProfile: Required[Dict[str, object]]
     """Defines how the machine will be handled once it executed a job."""
@@ -172,20 +184,36 @@ class Pool(TypedDict, total=False):
     """The resource id of the DevCenter Project the pool belongs to."""
     fabricProfileSkuName: Required[str]
     """The Azure SKU name of the machines in the pool."""
+    images: Required[List['Image']]
+    """The VM images of the machines in the pool."""
     name: Required[str]
     """Name of the pool. It needs to be globally unique."""
+    organizationProfile: Required['OrganizationProfile']
+    """Defines the organization in which the pool will be used."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     location: str
     """The geo-location where the resource lives."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed service identities assigned to this resource."""
+    osProfile: 'OsProfile'
+    """The OS profile of the agents in the pool."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    storageProfile: 'StorageProfile'
+    """The storage profile of the machines in the pool."""
     subnetResourceId: str
     """The subnet id on which to put all machines created in the pool."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class PoolOutputs(TypedDict, total=False):
-    """Outputs for Pool"""
+class DevOpsInfrastructurePoolOutputs(TypedDict, total=False):
+    """Outputs for DevOpsInfrastructurePool"""
     location: Output[Literal['string']]
     """The location the Managed DevOps Pool resource was deployed into."""
     name: Output[Literal['string']]
@@ -198,31 +226,28 @@ class PoolOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class PoolBicep(Module):
-    outputs: PoolOutputs
+class DevOpsInfrastructurePoolBicep(Module):
+    outputs: DevOpsInfrastructurePoolOutputs
 
 
-def pool(
+def dev_ops_infrastructure_pool(
         bicep: IO[str],
+        params: DevOpsInfrastructurePool,
         /,
         *,
-        params: Pool,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'dev-ops-infrastructure/pool',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PoolBicep:
-    symbol = "pool_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DevOpsInfrastructurePoolBicep:
+    symbol = "dev_ops_infrastructure_pool_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/dev-ops-infrastructure/pool:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -235,7 +260,7 @@ def pool(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PoolBicep(symbol)
+    output = DevOpsInfrastructurePoolBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

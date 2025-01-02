@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -44,6 +37,8 @@ class Queue(TypedDict, total=False):
     """The name of the storage queue to deploy."""
     metadata: Dict[str, object]
     """A name-value pair that represents queue metadata."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reader and Data Access', 'Role Based Access Control Administrator', 'Storage Account Backup Contributor', 'Storage Account Contributor', 'Storage Account Key Operator Service Role', 'Storage Queue Data Contributor', 'Storage Queue Data Message Processor', 'Storage Queue Data Message Sender', 'Storage Queue Data Reader', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class QueueOutputs(TypedDict, total=False):

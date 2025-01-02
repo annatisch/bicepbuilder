@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -60,6 +53,8 @@ class Subnet(TypedDict, total=False):
     """Enable or disable apply network policies on private endpoint in the subnet."""
     privateLinkServiceNetworkPolicies: Literal['Disabled', 'Enabled']
     """Enable or disable apply network policies on private link service in the subnet."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     routeTableResourceId: str
     """The resource ID of the route table to assign to the subnet."""
     serviceEndpointPolicies: List[object]

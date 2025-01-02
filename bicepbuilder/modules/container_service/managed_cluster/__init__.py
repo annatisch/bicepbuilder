@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -186,24 +186,6 @@ class CustomerManagedKey(TypedDict, total=False):
     """The version of the customer managed key to reference for encryption. If not provided, using 'latest'."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -222,8 +204,38 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
+class ConfigurationProtectedSetting(TypedDict, total=False):
+    """The configuration protected settings of the extension."""
+    sshPrivateKey: str
+    """The SSH private key to use for Git authentication."""
+
+
 class FluxExtension(TypedDict, total=False):
     """Settings and configurations for the flux extension."""
+    configurationProtectedSettings: 'ConfigurationProtectedSetting'
+    """The configuration protected settings of the extension."""
     configurations: List[object]
     """The flux configurations of the extension."""
     configurationSettings: Dict[str, object]
@@ -238,12 +250,6 @@ class FluxExtension(TypedDict, total=False):
     """Namespace where the extension will be created for an Namespace scoped extension."""
     version: str
     """The version of the extension."""
-
-
-class ConfigurationProtectedSetting(TypedDict, total=False):
-    """The configuration protected settings of the extension."""
-    sshPrivateKey: str
-    """The SSH private key to use for Git authentication."""
 
 
 class IstioServiceMeshCertificateAuthority(TypedDict, total=False):
@@ -304,10 +310,12 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ManagedCluster(TypedDict, total=False):
+class ContainerServiceManagedCluster(TypedDict, total=False):
     """"""
     name: Required[str]
     """Specifies the name of the AKS cluster."""
+    primaryAgentPoolProfiles: Required[List['PrimaryAgentPoolProfile']]
+    """Properties of the primary agent pool."""
     aksServicePrincipalProfile: Dict[str, object]
     """Information about a service principal identity for the cluster to use for manipulating Azure APIs. Required if no managed identities are assigned to the cluster."""
     appGatewayResourceId: str
@@ -330,6 +338,8 @@ class ManagedCluster(TypedDict, total=False):
     """Specifies whether the aciConnectorLinux add-on is enabled or not."""
     adminUsername: str
     """Specifies the administrator username of Linux virtual machines."""
+    agentPools: List['AgentPool']
+    """Define one or more secondary/additional agent pools."""
     authorizedIPRanges: List[object]
     """IP ranges are specified in CIDR format, e.g. 137.117.106.88/29. This feature is not compatible with clusters that use Public IP Per Node, or clusters that are using a Basic Load Balancer."""
     autoNodeOsUpgradeProfileUpgradeChannel: Literal['NodeImage', 'None', 'SecurityPatch', 'Unmanaged']
@@ -378,6 +388,10 @@ class ManagedCluster(TypedDict, total=False):
     """The type of the managed inbound Load Balancer BackendPool."""
     costAnalysisEnabled: bool
     """Specifies whether the cost analysis add-on is enabled or not. If Enabled """
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableCustomMetrics: bool
     """Indicates whether custom metrics collection has to be disabled or not. If not specified the default is false. No custom metrics will be emitted if this field is false but the container insights enabled field is false."""
     disableLocalAccounts: bool
@@ -430,6 +444,8 @@ class ManagedCluster(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     enableWorkloadIdentity: bool
     """Whether to enable Workload Identity. Requires OIDC issuer profile to be enabled."""
+    fluxExtension: 'FluxExtension'
+    """Settings and configurations for the flux extension."""
     httpApplicationRoutingEnabled: bool
     """Specifies whether the httpApplicationRouting add-on is enabled or not."""
     httpProxyConfig: Dict[str, object]
@@ -440,6 +456,8 @@ class ManagedCluster(TypedDict, total=False):
     """The interval in hours Image Cleaner will run. The maximum value is three months."""
     ingressApplicationGatewayEnabled: bool
     """Specifies whether the ingressApplicationGateway (AGIC) add-on is enabled or not."""
+    istioServiceMeshCertificateAuthority: 'IstioServiceMeshCertificateAuthority'
+    """The Istio Certificate Authority definition."""
     istioServiceMeshEnabled: bool
     """Specifies whether the Istio ServiceMesh add-on is enabled or not."""
     istioServiceMeshExternalIngressGatewayEnabled: bool
@@ -458,6 +476,12 @@ class ManagedCluster(TypedDict, total=False):
     """Specifies the sku of the load balancer used by the virtual machine scale sets used by nodepools."""
     location: str
     """Specifies the location of AKS cluster. It picks up Resource Group's location by default."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    maintenanceConfigurations: List['MaintenanceConfiguration']
+    """Whether or not to use AKS Automatic mode."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. Only one type of identity is supported: system-assigned or user-assigned, but not both."""
     managedOutboundIPCount: int
     """Outbound IP Count for the Load balancer."""
     metricAnnotationsAllowList: str
@@ -500,6 +524,8 @@ class ManagedCluster(TypedDict, total=False):
     """Private DNS Zone configuration. Set to 'system' and AKS will create a private DNS zone in the node resource group. Set to '' to disable private DNS Zone creation and use public DNS. Supply the resource ID here of an existing Private DNS zone to use an existing zone."""
     publicNetworkAccess: Literal['Disabled', 'Enabled', 'SecuredByPerimeter']
     """Allow or deny public network access for AKS."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Kubernetes Fleet Manager Contributor Role', 'Azure Kubernetes Fleet Manager RBAC Admin', 'Azure Kubernetes Fleet Manager RBAC Cluster Admin', 'Azure Kubernetes Fleet Manager RBAC Reader', 'Azure Kubernetes Fleet Manager RBAC Writer', 'Azure Kubernetes Service Cluster Admin Role', 'Azure Kubernetes Service Cluster Monitoring User', 'Azure Kubernetes Service Cluster User Role', 'Azure Kubernetes Service Contributor Role', 'Azure Kubernetes Service RBAC Admin', 'Azure Kubernetes Service RBAC Cluster Admin', 'Azure Kubernetes Service RBAC Reader', 'Azure Kubernetes Service RBAC Writer', 'Contributor', 'Kubernetes Agentless Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     serviceCidr: str
     """A CIDR notation IP range from which to assign service cluster IPs. It must not overlap with any Subnet IP ranges."""
     skuName: Literal['Automatic', 'Base']
@@ -520,8 +546,8 @@ class ManagedCluster(TypedDict, total=False):
     """Specifies whether the webApplicationRoutingEnabled add-on is enabled or not."""
 
 
-class ManagedClusterOutputs(TypedDict, total=False):
-    """Outputs for ManagedCluster"""
+class ContainerServiceManagedClusterOutputs(TypedDict, total=False):
+    """Outputs for ContainerServiceManagedCluster"""
     addonProfiles: Output[Literal['object']]
     """The addonProfiles of the Kubernetes cluster."""
     controlPlaneFQDN: Output[Literal['string']]
@@ -556,31 +582,28 @@ class ManagedClusterOutputs(TypedDict, total=False):
     """The Object ID of Web Application Routing."""
 
 
-class ManagedClusterBicep(Module):
-    outputs: ManagedClusterOutputs
+class ContainerServiceManagedClusterBicep(Module):
+    outputs: ContainerServiceManagedClusterOutputs
 
 
-def managed_cluster(
+def container_service_managed_cluster(
         bicep: IO[str],
+        params: ContainerServiceManagedCluster,
         /,
         *,
-        params: ManagedCluster,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'container-service/managed-cluster',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ManagedClusterBicep:
-    symbol = "managed_cluster_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ContainerServiceManagedClusterBicep:
+    symbol = "container_service_managed_cluster_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/container-service/managed-cluster:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -593,7 +616,7 @@ def managed_cluster(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ManagedClusterBicep(symbol)
+    output = ContainerServiceManagedClusterBicep(symbol)
     output.outputs = {
             'addonProfiles': Output(symbol, 'addonProfiles', 'object'),
             'controlPlaneFQDN': Output(symbol, 'controlPlaneFQDN', 'string'),

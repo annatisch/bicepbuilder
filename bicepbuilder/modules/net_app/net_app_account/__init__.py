@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -77,6 +77,8 @@ class NetAppAccount(TypedDict, total=False):
     """Enable AES encryption on the SMB Server."""
     capacityPools: List['CapacityPool']
     """Capacity pools to create."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
     dnsServers: str
     """Required if domainName is specified. Comma separated list of DNS server IP addresses (IPv4 only) required for the Active Directory (AD) domain join and SMB authentication operations to succeed."""
     domainJoinOU: str
@@ -99,6 +101,12 @@ class NetAppAccount(TypedDict, total=False):
     """Specifies whether or not the LDAP traffic needs to be signed."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     serverRootCACertificate: str
     """A server Root certificate is required of ldapOverTLS is enabled."""
     smbServerNamePrefix: str
@@ -127,25 +135,22 @@ class NetAppAccountBicep(Module):
 
 def net_app_account(
         bicep: IO[str],
+        params: NetAppAccount,
         /,
         *,
-        params: NetAppAccount,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'net-app/net-app-account',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
 ) -> NetAppAccountBicep:
     symbol = "net_app_account_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/net-app/net-app-account:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")

@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -42,27 +35,24 @@ class AuthorizationRuleBicep(Module):
 
 def authorization_rule(
         bicep: IO[str],
+        params: AuthorizationRule,
         /,
         *,
-        params: AuthorizationRule,
-        scope: Optional[BicepExpression] = None,
         namespace_name: Union[str, BicepExpression],
         wcf_relay_name: Union[str, BicepExpression],
+        scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'relay/namespace/wcf-relay/authorization-rule',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
 ) -> AuthorizationRuleBicep:
     symbol = "authorization_rule_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/relay/namespace/wcf-relay/authorization-rule:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")

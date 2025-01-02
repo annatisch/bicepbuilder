@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -62,8 +55,12 @@ class ElasticPool(TypedDict, total=False):
     """The storage limit for the database elastic pool in bytes."""
     minCapacity: int
     """Minimal capacity that serverless pool will not shrink below, if not paused."""
+    perDatabaseSettings: 'PerDatabaseSetting'
+    """The per database settings for the elastic pool."""
     preferredEnclaveType: Literal['Default', 'VBS']
     """Type of enclave requested on the elastic pool."""
+    sku: 'Sku'
+    """The elastic pool SKU."""
     tags: Dict[str, object]
     """Tags of the resource."""
     zoneRedundant: bool

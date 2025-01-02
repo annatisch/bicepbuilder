@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -62,7 +62,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DeploymentScript(TypedDict, total=False):
+class ResourcesDeploymentScript(TypedDict, total=False):
     """"""
     kind: Required[Literal['AzureCLI', 'AzurePowerShell']]
     """Specifies the Kind of the Deployment Script."""
@@ -80,12 +80,20 @@ class DeploymentScript(TypedDict, total=False):
     """Container group name, if not specified then the name will get auto-generated. Not specifying a 'containerGroupName' indicates the system to generate a unique name which might end up flagging an Azure Policy as non-compliant. Use 'containerGroupName' when you have an Azure Policy that expects a specific naming convention or when you want to fully control the name. 'containerGroupName' property must be between 1 and 63 characters long, must contain only lowercase letters, numbers, and dashes and it cannot start or end with a dash and consecutive dashes are not allowed."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    environmentVariables: List['EnvironmentVariable']
+    """The environment variables to pass over to the script."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     primaryScriptUri: str
     """Uri for the external script. This is the entry point for the external script. To run an internal script, use the scriptContent parameter instead."""
     retentionInterval: str
     """Interval for which the service retains the script resource after it reaches a terminal state. Resource will be deleted when this duration expires. Duration is based on ISO 8601 pattern (for example P7D means one week)."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     runOnce: bool
     """When set to false, script will run every time the template is deployed. When set to true, the script will only run once."""
     scriptContent: str
@@ -104,8 +112,8 @@ class DeploymentScript(TypedDict, total=False):
     """Do not provide a value! This date value is used to make sure the script run every time the template is deployed."""
 
 
-class DeploymentScriptOutputs(TypedDict, total=False):
-    """Outputs for DeploymentScript"""
+class ResourcesDeploymentScriptOutputs(TypedDict, total=False):
+    """Outputs for ResourcesDeploymentScript"""
     deploymentScriptLogs: Output[Literal['array']]
     """The logs of the deployment script."""
     location: Output[Literal['string']]
@@ -120,31 +128,28 @@ class DeploymentScriptOutputs(TypedDict, total=False):
     """The resource ID of the deployment script."""
 
 
-class DeploymentScriptBicep(Module):
-    outputs: DeploymentScriptOutputs
+class ResourcesDeploymentScriptBicep(Module):
+    outputs: ResourcesDeploymentScriptOutputs
 
 
-def deployment_script(
+def resources_deployment_script(
         bicep: IO[str],
+        params: ResourcesDeploymentScript,
         /,
         *,
-        params: DeploymentScript,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'resources/deployment-script',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DeploymentScriptBicep:
-    symbol = "deployment_script_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ResourcesDeploymentScriptBicep:
+    symbol = "resources_deployment_script_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/resources/deployment-script:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -157,7 +162,7 @@ def deployment_script(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DeploymentScriptBicep(symbol)
+    output = ResourcesDeploymentScriptBicep(symbol)
     output.outputs = {
             'deploymentScriptLogs': Output(symbol, 'deploymentScriptLogs', 'array'),
             'location': Output(symbol, 'location', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Query(TypedDict, total=False):
+class ResourceGraphQuery(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the Resource Graph Query."""
@@ -56,14 +56,18 @@ class Query(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     queryDescription: str
     """The description of a graph query."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""
 
 
-class QueryOutputs(TypedDict, total=False):
-    """Outputs for Query"""
+class ResourceGraphQueryOutputs(TypedDict, total=False):
+    """Outputs for ResourceGraphQuery"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -74,31 +78,28 @@ class QueryOutputs(TypedDict, total=False):
     """The resource ID of the query."""
 
 
-class QueryBicep(Module):
-    outputs: QueryOutputs
+class ResourceGraphQueryBicep(Module):
+    outputs: ResourceGraphQueryOutputs
 
 
-def query(
+def resource_graph_query(
         bicep: IO[str],
+        params: ResourceGraphQuery,
         /,
         *,
-        params: Query,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'resource-graph/query',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> QueryBicep:
-    symbol = "query_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ResourceGraphQueryBicep:
+    symbol = "resource_graph_query_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/resource-graph/query:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -111,7 +112,7 @@ def query(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = QueryBicep(symbol)
+    output = ResourceGraphQueryBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class PrivateLinkService(TypedDict, total=False):
+class NetworkPrivateLinkService(TypedDict, total=False):
     """"""
     ipConfigurations: Required[List[object]]
     """An array of private link service IP configurations. At least one IP configuration is required on the private link service."""
@@ -66,14 +66,18 @@ class PrivateLinkService(TypedDict, total=False):
     """The list of Fqdn."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags to be applied on all resources/resource groups in this deployment."""
     visibility: Dict[str, object]
     """Controls the exposure settings for your Private Link service. Service providers can choose to limit the exposure to their service to subscriptions with Azure role-based access control (Azure RBAC) permissions, a restricted set of subscriptions, or all Azure subscriptions."""
 
 
-class PrivateLinkServiceOutputs(TypedDict, total=False):
-    """Outputs for PrivateLinkService"""
+class NetworkPrivateLinkServiceOutputs(TypedDict, total=False):
+    """Outputs for NetworkPrivateLinkService"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -84,31 +88,28 @@ class PrivateLinkServiceOutputs(TypedDict, total=False):
     """The resource ID of the private link service."""
 
 
-class PrivateLinkServiceBicep(Module):
-    outputs: PrivateLinkServiceOutputs
+class NetworkPrivateLinkServiceBicep(Module):
+    outputs: NetworkPrivateLinkServiceOutputs
 
 
-def private_link_service(
+def network_private_link_service(
         bicep: IO[str],
+        params: NetworkPrivateLinkService,
         /,
         *,
-        params: PrivateLinkService,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/private-link-service',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PrivateLinkServiceBicep:
-    symbol = "private_link_service_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkPrivateLinkServiceBicep:
+    symbol = "network_private_link_service_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/private-link-service:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -121,7 +122,7 @@ def private_link_service(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PrivateLinkServiceBicep(symbol)
+    output = NetworkPrivateLinkServiceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -38,7 +38,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ActionGroup(TypedDict, total=False):
+class InsightsActionGroup(TypedDict, total=False):
     """"""
     groupShortName: Required[str]
     """The short name of the action group."""
@@ -64,6 +64,8 @@ class ActionGroup(TypedDict, total=False):
     """Location for all resources."""
     logicAppReceivers: List[object]
     """The list of logic app receivers that are part of this action group."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     smsReceivers: List[object]
     """The list of SMS receivers that are part of this action group."""
     tags: Dict[str, object]
@@ -74,8 +76,8 @@ class ActionGroup(TypedDict, total=False):
     """The list of webhook receivers that are part of this action group."""
 
 
-class ActionGroupOutputs(TypedDict, total=False):
-    """Outputs for ActionGroup"""
+class InsightsActionGroupOutputs(TypedDict, total=False):
+    """Outputs for InsightsActionGroup"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -86,31 +88,28 @@ class ActionGroupOutputs(TypedDict, total=False):
     """The resource ID of the action group."""
 
 
-class ActionGroupBicep(Module):
-    outputs: ActionGroupOutputs
+class InsightsActionGroupBicep(Module):
+    outputs: InsightsActionGroupOutputs
 
 
-def action_group(
+def insights_action_group(
         bicep: IO[str],
+        params: InsightsActionGroup,
         /,
         *,
-        params: ActionGroup,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/action-group',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ActionGroupBicep:
-    symbol = "action_group_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsActionGroupBicep:
+    symbol = "insights_action_group_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/action-group:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -123,7 +122,7 @@ def action_group(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ActionGroupBicep(symbol)
+    output = InsightsActionGroupBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

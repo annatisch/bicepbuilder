@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -38,7 +38,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class MetricAlert(TypedDict, total=False):
+class InsightsMetricAlert(TypedDict, total=False):
     """"""
     criteria: Required[Dict[str, object]]
     """Maps to the 'odata.type' field. Specifies the type of the alert criteria."""
@@ -62,6 +62,8 @@ class MetricAlert(TypedDict, total=False):
     """how often the metric alert is evaluated represented in ISO 8601 duration format."""
     location: str
     """Location for all resources."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     scopes: List[object]
     """the list of resource IDs that this metric alert is scoped to."""
     severity: Literal[0, 1, 2, 3, 4]
@@ -72,8 +74,8 @@ class MetricAlert(TypedDict, total=False):
     """the period of time (in ISO 8601 duration format) that is used to monitor alert activity based on the threshold."""
 
 
-class MetricAlertOutputs(TypedDict, total=False):
-    """Outputs for MetricAlert"""
+class InsightsMetricAlertOutputs(TypedDict, total=False):
+    """Outputs for InsightsMetricAlert"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -84,31 +86,28 @@ class MetricAlertOutputs(TypedDict, total=False):
     """The resource ID of the metric alert."""
 
 
-class MetricAlertBicep(Module):
-    outputs: MetricAlertOutputs
+class InsightsMetricAlertBicep(Module):
+    outputs: InsightsMetricAlertOutputs
 
 
-def metric_alert(
+def insights_metric_alert(
         bicep: IO[str],
+        params: InsightsMetricAlert,
         /,
         *,
-        params: MetricAlert,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/metric-alert',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> MetricAlertBicep:
-    symbol = "metric_alert_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsMetricAlertBicep:
+    symbol = "insights_metric_alert_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/metric-alert:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -121,7 +120,7 @@ def metric_alert(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = MetricAlertBicep(symbol)
+    output = InsightsMetricAlertBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

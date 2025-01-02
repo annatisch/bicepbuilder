@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,24 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -52,6 +34,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -90,7 +94,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DomainService(TypedDict, total=False):
+class AadDomainService(TypedDict, total=False):
     """"""
     domainName: Required[str]
     """The domain name specific to the Azure ADDS service."""
@@ -100,6 +104,8 @@ class DomainService(TypedDict, total=False):
     """The password to decrypt the provided Secure LDAP certificate PFX file. Required if secure LDAP is enabled."""
     additionalRecipients: List[object]
     """The email recipient value to receive alerts."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     domainConfigurationType: Literal['FullySynced', 'ResourceTrusting']
     """The value is to provide domain configuration type."""
     enableTelemetry: bool
@@ -116,6 +122,8 @@ class DomainService(TypedDict, total=False):
     """A flag to determine whether or not Secure LDAP is enabled or disabled."""
     location: str
     """The location to deploy the Azure ADDS Services. Uses the resource group location if not specified."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     name: str
     """The name of the AADDS resource. Defaults to the domain name specific to the Azure ADDS service. The prefix of your specified domain name (such as dscontoso in the dscontoso.com domain name) must contain 15 or fewer characters."""
     notifyDcAdmins: Literal['Disabled', 'Enabled']
@@ -124,6 +132,10 @@ class DomainService(TypedDict, total=False):
     """The value is to notify the Global Admins."""
     ntlmV1: Literal['Disabled', 'Enabled']
     """The value is to enable clients making request using NTLM v1."""
+    replicaSets: List['ReplicaSet']
+    """Additional replica set for the managed domain."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     sku: Literal['Enterprise', 'Premium', 'Standard']
     """The name of the SKU specific to Azure ADDS Services."""
     syncNtlmPasswords: Literal['Disabled', 'Enabled']
@@ -136,8 +148,8 @@ class DomainService(TypedDict, total=False):
     """The value is to enable clients making request using TLSv1."""
 
 
-class DomainServiceOutputs(TypedDict, total=False):
-    """Outputs for DomainService"""
+class AadDomainServiceOutputs(TypedDict, total=False):
+    """Outputs for AadDomainService"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -148,31 +160,28 @@ class DomainServiceOutputs(TypedDict, total=False):
     """The resource ID of the Azure Active Directory Domain Services(Azure ADDS)."""
 
 
-class DomainServiceBicep(Module):
-    outputs: DomainServiceOutputs
+class AadDomainServiceBicep(Module):
+    outputs: AadDomainServiceOutputs
 
 
-def domain_service(
+def aad_domain_service(
         bicep: IO[str],
+        params: AadDomainService,
         /,
         *,
-        params: DomainService,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'aad/domain-service',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DomainServiceBicep:
-    symbol = "domain_service_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> AadDomainServiceBicep:
+    symbol = "aad_domain_service_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/aad/domain-service:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -185,7 +194,7 @@ def domain_service(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DomainServiceBicep(symbol)
+    output = AadDomainServiceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

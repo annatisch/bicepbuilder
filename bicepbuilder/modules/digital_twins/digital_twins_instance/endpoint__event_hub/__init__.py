@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -42,6 +35,8 @@ class EndpointEventHub(TypedDict, total=False):
     """The URL of the EventHub namespace for identity-based authentication. It must include the protocol 'sb://' (i.e. sb://xyz.servicebus.windows.net)."""
     entityPath: str
     """The EventHub name in the EventHub namespace for identity-based authentication."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource.  Only one type of identity is supported: system-assigned or user-assigned, but not both."""
     name: str
     """The name of the Digital Twin Endpoint."""
 

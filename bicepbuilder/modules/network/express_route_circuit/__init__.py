@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,24 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -52,6 +34,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -82,7 +86,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ExpressRouteCircuit(TypedDict, total=False):
+class NetworkExpressRouteCircuit(TypedDict, total=False):
     """"""
     bandwidthInMbps: Required[int]
     """This is the bandwidth in Mbps of the circuit being created. It must exactly match one of the available bandwidth offers List ExpressRoute Service Providers API call."""
@@ -96,6 +100,8 @@ class ExpressRouteCircuit(TypedDict, total=False):
     """Allow classic operations. You can connect to virtual networks in the classic deployment model by setting allowClassicOperations to true."""
     bandwidthInGbps: int
     """The bandwidth of the circuit when the circuit is provisioned on an ExpressRoutePort resource. Available when configuring Express Route Direct. Default value of 0 will set the property to null."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     expressRoutePortResourceId: str
@@ -104,6 +110,8 @@ class ExpressRouteCircuit(TypedDict, total=False):
     """Flag denoting global reach status. To enable ExpressRoute Global Reach between different geopolitical regions, your circuits must be Premium SKU."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     peerASN: int
     """The autonomous system number of the customer/connectivity provider."""
     peering: bool
@@ -112,6 +120,8 @@ class ExpressRouteCircuit(TypedDict, total=False):
     """BGP peering type for the Circuit. Choose from AzurePrivatePeering, AzurePublicPeering or MicrosoftPeering."""
     primaryPeerAddressPrefix: str
     """A /30 subnet used to configure IP addresses for interfaces on Link1."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     secondaryPeerAddressPrefix: str
     """A /30 subnet used to configure IP addresses for interfaces on Link2."""
     sharedKey: str
@@ -126,8 +136,8 @@ class ExpressRouteCircuit(TypedDict, total=False):
     """Specifies the identifier that is used to identify the customer."""
 
 
-class ExpressRouteCircuitOutputs(TypedDict, total=False):
-    """Outputs for ExpressRouteCircuit"""
+class NetworkExpressRouteCircuitOutputs(TypedDict, total=False):
+    """Outputs for NetworkExpressRouteCircuit"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -140,31 +150,28 @@ class ExpressRouteCircuitOutputs(TypedDict, total=False):
     """The service key of the express route circuit."""
 
 
-class ExpressRouteCircuitBicep(Module):
-    outputs: ExpressRouteCircuitOutputs
+class NetworkExpressRouteCircuitBicep(Module):
+    outputs: NetworkExpressRouteCircuitOutputs
 
 
-def express_route_circuit(
+def network_express_route_circuit(
         bicep: IO[str],
+        params: NetworkExpressRouteCircuit,
         /,
         *,
-        params: ExpressRouteCircuit,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/express-route-circuit',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ExpressRouteCircuitBicep:
-    symbol = "express_route_circuit_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkExpressRouteCircuitBicep:
+    symbol = "network_express_route_circuit_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/express-route-circuit:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -177,7 +184,7 @@ def express_route_circuit(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ExpressRouteCircuitBicep(symbol)
+    output = NetworkExpressRouteCircuitBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

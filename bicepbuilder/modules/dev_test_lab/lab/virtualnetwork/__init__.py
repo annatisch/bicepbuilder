@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -28,24 +21,6 @@ class AllowedSubnet(TypedDict, total=False):
     """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
 
 
-class SubnetOverride(TypedDict, total=False):
-    """The subnet overrides of the virtual network."""
-    labSubnetName: Required[str]
-    """The name given to the subnet within the lab."""
-    resourceId: Required[str]
-    """The resource ID of the subnet."""
-    useInVmCreationPermission: Literal['Allow', 'Default', 'Deny']
-    """Indicates whether this subnet can be used during virtual machine creation (i.e. Allow, Deny)."""
-    usePublicIpAddressPermission: Literal['Allow', 'Default', 'Deny']
-    """Indicates whether public IP addresses can be assigned to virtual machines on this subnet (i.e. Allow, Deny)."""
-    virtualNetworkPoolName: str
-    """The virtual network pool associated with this subnet."""
-
-
-class SharedPublicIpAddressConfiguration(TypedDict, total=False):
-    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
-
-
 class AllowedPort(TypedDict, total=False):
     """Backend ports that virtual machines on this subnet are allowed to expose."""
     backendPort: Required[int]
@@ -54,14 +29,40 @@ class AllowedPort(TypedDict, total=False):
     """Protocol type of the port."""
 
 
+class SharedPublicIpAddressConfiguration(TypedDict, total=False):
+    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
+    allowedPorts: Required[List['AllowedPort']]
+    """Backend ports that virtual machines on this subnet are allowed to expose."""
+
+
+class SubnetOverride(TypedDict, total=False):
+    """The subnet overrides of the virtual network."""
+    labSubnetName: Required[str]
+    """The name given to the subnet within the lab."""
+    resourceId: Required[str]
+    """The resource ID of the subnet."""
+    sharedPublicIpAddressConfiguration: 'SharedPublicIpAddressConfiguration'
+    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
+    useInVmCreationPermission: Literal['Allow', 'Default', 'Deny']
+    """Indicates whether this subnet can be used during virtual machine creation (i.e. Allow, Deny)."""
+    usePublicIpAddressPermission: Literal['Allow', 'Default', 'Deny']
+    """Indicates whether public IP addresses can be assigned to virtual machines on this subnet (i.e. Allow, Deny)."""
+    virtualNetworkPoolName: str
+    """The virtual network pool associated with this subnet."""
+
+
 class Virtualnetwork(TypedDict, total=False):
     """"""
     externalProviderResourceId: Required[str]
     """The resource ID of the virtual network."""
     name: Required[str]
     """The name of the virtual network."""
+    allowedSubnets: List['AllowedSubnet']
+    """The allowed subnets of the virtual network."""
     description: str
     """The description of the virtual network."""
+    subnetOverrides: List['SubnetOverride']
+    """The subnet overrides of the virtual network."""
     tags: Dict[str, object]
     """Tags of the resource."""
 

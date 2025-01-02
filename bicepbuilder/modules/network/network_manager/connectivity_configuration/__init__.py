@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -40,10 +33,14 @@ class Hub(TypedDict, total=False):
 
 class ConnectivityConfiguration(TypedDict, total=False):
     """"""
+    appliesToGroups: Required[List['AppliesToGroup']]
+    """Network Groups for the configuration. A connectivity configuration must be associated to at least one network group."""
     connectivityTopology: Required[Literal['HubAndSpoke', 'Mesh']]
     """Connectivity topology type."""
     name: Required[str]
     """The name of the connectivity configuration."""
+    hubs: List['Hub']
+    """List of hub items. This will create peerings between the specified hub and the virtual networks in the network group specified. Required if connectivityTopology is of type "HubAndSpoke"."""
     deleteExistingPeering: bool
     """Flag if need to remove current existing peerings. If set to "True", all peerings on virtual networks in selected network groups will be removed and replaced with the peerings defined by this configuration. Optional when connectivityTopology is of type "HubAndSpoke"."""
     description: str

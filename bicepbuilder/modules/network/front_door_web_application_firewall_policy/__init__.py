@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,10 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class CustomRule(TypedDict, total=False):
-    """The custom rules inside the policy."""
 
 
 class Rule(TypedDict, total=False):
@@ -42,16 +38,18 @@ class Rule(TypedDict, total=False):
     """Number of allowed requests per client within the time window."""
 
 
+class CustomRule(TypedDict, total=False):
+    """The custom rules inside the policy."""
+    rules: List['Rule']
+    """List of rules."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class ManagedRule(TypedDict, total=False):
-    """Describes the managedRules structure."""
 
 
 class ManagedRuleSet(TypedDict, total=False):
@@ -66,6 +64,12 @@ class ManagedRuleSet(TypedDict, total=False):
     """Defines the rule group overrides to apply to the rule set."""
     ruleSetAction: Literal['Block', 'Log', 'Redirect']
     """Defines the rule set action."""
+
+
+class ManagedRule(TypedDict, total=False):
+    """Describes the managedRules structure."""
+    managedRuleSets: List['ManagedRuleSet']
+    """List of rule sets."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -88,24 +92,32 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class FrontDoorWebApplicationFirewallPolicy(TypedDict, total=False):
+class NetworkFrontDoorWebApplicationFirewallPolicy(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Front Door WAF policy."""
+    customRules: 'CustomRule'
+    """The custom rules inside the policy."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedRules: 'ManagedRule'
+    """Describes the managedRules structure."""
     policySettings: Dict[str, object]
     """The PolicySettings for policy."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     sku: Literal['Premium_AzureFrontDoor', 'Standard_AzureFrontDoor']
     """The pricing tier of the WAF profile."""
     tags: Dict[str, object]
     """Resource tags."""
 
 
-class FrontDoorWebApplicationFirewallPolicyOutputs(TypedDict, total=False):
-    """Outputs for FrontDoorWebApplicationFirewallPolicy"""
+class NetworkFrontDoorWebApplicationFirewallPolicyOutputs(TypedDict, total=False):
+    """Outputs for NetworkFrontDoorWebApplicationFirewallPolicy"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -116,31 +128,28 @@ class FrontDoorWebApplicationFirewallPolicyOutputs(TypedDict, total=False):
     """The resource ID of the Front Door WAF policy."""
 
 
-class FrontDoorWebApplicationFirewallPolicyBicep(Module):
-    outputs: FrontDoorWebApplicationFirewallPolicyOutputs
+class NetworkFrontDoorWebApplicationFirewallPolicyBicep(Module):
+    outputs: NetworkFrontDoorWebApplicationFirewallPolicyOutputs
 
 
-def front_door_web_application_firewall_policy(
+def network_front_door_web_application_firewall_policy(
         bicep: IO[str],
+        params: NetworkFrontDoorWebApplicationFirewallPolicy,
         /,
         *,
-        params: FrontDoorWebApplicationFirewallPolicy,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/front-door-web-application-firewall-policy',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> FrontDoorWebApplicationFirewallPolicyBicep:
-    symbol = "front_door_web_application_firewall_policy_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkFrontDoorWebApplicationFirewallPolicyBicep:
+    symbol = "network_front_door_web_application_firewall_policy_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/front-door-web-application-firewall-policy:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -153,7 +162,7 @@ def front_door_web_application_firewall_policy(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = FrontDoorWebApplicationFirewallPolicyBicep(symbol)
+    output = NetworkFrontDoorWebApplicationFirewallPolicyBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

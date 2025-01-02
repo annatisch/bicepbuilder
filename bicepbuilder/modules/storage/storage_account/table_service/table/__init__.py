@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -42,6 +35,8 @@ class Table(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the table."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reader and Data Access', 'Role Based Access Control Administrator', 'Storage Account Backup Contributor', 'Storage Account Contributor', 'Storage Account Key Operator Service Role', 'Storage Table Data Contributor', 'Storage Table Data Reader', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class TableOutputs(TypedDict, total=False):

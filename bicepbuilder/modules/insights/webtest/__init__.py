@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Webtest(TypedDict, total=False):
+class InsightsWebtest(TypedDict, total=False):
     """"""
     appInsightResourceId: Required[str]
     """Resource ID of the App Insights resource to link with this webtest."""
@@ -72,8 +72,12 @@ class Webtest(TypedDict, total=False):
     """Location for all Resources."""
     locations: List[object]
     """List of where to physically run the tests from to give global coverage for accessibility of your application."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     retryEnabled: bool
     """Allow for retries should this WebTest fail."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     syntheticMonitorId: str
     """Unique ID of this WebTest."""
     tags: Dict[str, object]
@@ -84,8 +88,8 @@ class Webtest(TypedDict, total=False):
     """The collection of validation rule properties."""
 
 
-class WebtestOutputs(TypedDict, total=False):
-    """Outputs for Webtest"""
+class InsightsWebtestOutputs(TypedDict, total=False):
+    """Outputs for InsightsWebtest"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -96,31 +100,28 @@ class WebtestOutputs(TypedDict, total=False):
     """The resource ID of the webtest."""
 
 
-class WebtestBicep(Module):
-    outputs: WebtestOutputs
+class InsightsWebtestBicep(Module):
+    outputs: InsightsWebtestOutputs
 
 
-def webtest(
+def insights_webtest(
         bicep: IO[str],
+        params: InsightsWebtest,
         /,
         *,
-        params: Webtest,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/webtest',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> WebtestBicep:
-    symbol = "webtest_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsWebtestBicep:
+    symbol = "insights_webtest_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/webtest:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -133,7 +134,7 @@ def webtest(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = WebtestBicep(symbol)
+    output = InsightsWebtestBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

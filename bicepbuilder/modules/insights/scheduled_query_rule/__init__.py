@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -38,7 +38,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ScheduledQueryRule(TypedDict, total=False):
+class InsightsScheduledQueryRule(TypedDict, total=False):
     """"""
     criterias: Required[Dict[str, object]]
     """The rule criteria that defines the conditions of the scheduled query rule."""
@@ -68,6 +68,8 @@ class ScheduledQueryRule(TypedDict, total=False):
     """Location for all resources."""
     queryTimeRange: str
     """If specified (in ISO 8601 duration format) then overrides the query time range. Relevant only for rules of the kind LogAlert."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ruleResolveConfiguration: Dict[str, object]
     """Defines the configuration for resolving fired alerts. Relevant only for rules of the kind LogAlert."""
     severity: Literal[0, 1, 2, 3, 4]
@@ -82,8 +84,8 @@ class ScheduledQueryRule(TypedDict, total=False):
     """List of resource type of the target resource(s) on which the alert is created/updated. For example if the scope is a resource group and targetResourceTypes is Microsoft.Compute/virtualMachines, then a different alert will be fired for each virtual machine in the resource group which meet the alert criteria. Relevant only for rules of the kind LogAlert."""
 
 
-class ScheduledQueryRuleOutputs(TypedDict, total=False):
-    """Outputs for ScheduledQueryRule"""
+class InsightsScheduledQueryRuleOutputs(TypedDict, total=False):
+    """Outputs for InsightsScheduledQueryRule"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -94,31 +96,28 @@ class ScheduledQueryRuleOutputs(TypedDict, total=False):
     """The resource ID of the created scheduled query rule."""
 
 
-class ScheduledQueryRuleBicep(Module):
-    outputs: ScheduledQueryRuleOutputs
+class InsightsScheduledQueryRuleBicep(Module):
+    outputs: InsightsScheduledQueryRuleOutputs
 
 
-def scheduled_query_rule(
+def insights_scheduled_query_rule(
         bicep: IO[str],
+        params: InsightsScheduledQueryRule,
         /,
         *,
-        params: ScheduledQueryRule,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/scheduled-query-rule',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ScheduledQueryRuleBicep:
-    symbol = "scheduled_query_rule_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsScheduledQueryRuleBicep:
+    symbol = "insights_scheduled_query_rule_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/scheduled-query-rule:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -131,7 +130,7 @@ def scheduled_query_rule(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ScheduledQueryRuleBicep(symbol)
+    output = InsightsScheduledQueryRuleBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

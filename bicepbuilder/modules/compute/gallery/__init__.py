@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,36 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class Application(TypedDict, total=False):
-    """Applications to create."""
-    name: Required[str]
-    """Name of the application definition."""
-    supportedOSType: Required[Literal['Linux', 'Windows']]
-    """The OS type of the application."""
-    description: str
-    """The description of this gallery application definition resource. This property is updatable."""
-    endOfLifeDate: str
-    """The end of life date of the gallery application definition. This property can be used for decommissioning purposes. This property is updatable."""
-    eula: str
-    """The Eula agreement for the gallery application definition."""
-    privacyStatementUri: str
-    """The privacy statement uri."""
-    releaseNoteUri: str
-    """The release note uri. Has to be a valid URL."""
-    tags: Dict[str, object]
-    """Tags for all resources."""
-
-
-class CustomAction(TypedDict, total=False):
-    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
-    name: Required[str]
-    """The name of the custom action. Must be unique within the Gallery Application Version."""
-    script: Required[str]
-    """The script to run when executing this custom action."""
-    description: str
-    """Description to help the users understand what this custom action does."""
 
 
 class Parameter(TypedDict, total=False):
@@ -60,6 +30,18 @@ class Parameter(TypedDict, total=False):
     """Indicates whether this parameter must be passed when running the custom action."""
     type: Literal['ConfigurationDataBlob', 'LogOutputBlob', 'String']
     """Specifies the type of the custom action parameter."""
+
+
+class CustomAction(TypedDict, total=False):
+    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
+    name: Required[str]
+    """The name of the custom action. Must be unique within the Gallery Application Version."""
+    script: Required[str]
+    """The script to run when executing this custom action."""
+    description: str
+    """Description to help the users understand what this custom action does."""
+    parameters: List['Parameter']
+    """The parameters that this custom action uses."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -82,36 +64,28 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Image(TypedDict, total=False):
-    """Images to create."""
+class Application(TypedDict, total=False):
+    """Applications to create."""
     name: Required[str]
-    """Name of the image definition."""
-    osState: Required[Literal['Generalized', 'Specialized']]
-    """This property allows the user to specify the state of the OS of the image."""
-    osType: Required[Literal['Linux', 'Windows']]
-    """This property allows you to specify the type of the OS that is included in the disk when creating a VM from a managed image."""
-    architecture: Literal['Arm64', 'x64']
-    """The architecture of the image. Applicable to OS disks only."""
+    """Name of the application definition."""
+    supportedOSType: Required[Literal['Linux', 'Windows']]
+    """The OS type of the application."""
+    customActions: List['CustomAction']
+    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
     description: str
-    """The description of this gallery image definition resource. This property is updatable."""
-    endOfLife: str
-    """The end of life date of the gallery image definition. This property can be used for decommissioning purposes. This property is updatable."""
+    """The description of this gallery application definition resource. This property is updatable."""
+    endOfLifeDate: str
+    """The end of life date of the gallery application definition. This property can be used for decommissioning purposes. This property is updatable."""
     eula: str
-    """The Eula agreement for the gallery image definition."""
-    excludedDiskTypes: List[object]
-    """Describes the disallowed disk types."""
-    hyperVGeneration: Literal['V1', 'V2']
-    """The hypervisor generation of the Virtual Machine. If this value is not specified, then it is determined by the securityType parameter. If the securityType parameter is specified, then the value of hyperVGeneration will be V2, else V1."""
-    isAcceleratedNetworkSupported: bool
-    """Specify if the image supports accelerated networking. Defaults to true."""
-    isHibernateSupported: bool
-    """Specify if the image supports hibernation."""
+    """The Eula agreement for the gallery application definition."""
     privacyStatementUri: str
     """The privacy statement uri."""
     releaseNoteUri: str
     """The release note uri. Has to be a valid URL."""
-    securityType: Literal['ConfidentialVM', 'ConfidentialVMSupported', 'Standard', 'TrustedLaunch', 'TrustedLaunchAndConfidentialVmSupported', 'TrustedLaunchSupported']
-    """The security type of the image. Requires a hyperVGeneration V2. Defaults to """
+    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    tags: Dict[str, object]
+    """Tags for all resources."""
 
 
 class Identifier(TypedDict, total=False):
@@ -150,6 +124,46 @@ class VCPU(TypedDict, total=False):
     """The minimum number of the resource."""
 
 
+class Image(TypedDict, total=False):
+    """Images to create."""
+    identifier: Required['Identifier']
+    """This is the gallery image definition identifier."""
+    name: Required[str]
+    """Name of the image definition."""
+    osState: Required[Literal['Generalized', 'Specialized']]
+    """This property allows the user to specify the state of the OS of the image."""
+    osType: Required[Literal['Linux', 'Windows']]
+    """This property allows you to specify the type of the OS that is included in the disk when creating a VM from a managed image."""
+    architecture: Literal['Arm64', 'x64']
+    """The architecture of the image. Applicable to OS disks only."""
+    description: str
+    """The description of this gallery image definition resource. This property is updatable."""
+    endOfLife: str
+    """The end of life date of the gallery image definition. This property can be used for decommissioning purposes. This property is updatable."""
+    eula: str
+    """The Eula agreement for the gallery image definition."""
+    excludedDiskTypes: List[object]
+    """Describes the disallowed disk types."""
+    hyperVGeneration: Literal['V1', 'V2']
+    """The hypervisor generation of the Virtual Machine. If this value is not specified, then it is determined by the securityType parameter. If the securityType parameter is specified, then the value of hyperVGeneration will be V2, else V1."""
+    isAcceleratedNetworkSupported: bool
+    """Specify if the image supports accelerated networking. Defaults to true."""
+    isHibernateSupported: bool
+    """Specify if the image supports hibernation."""
+    memory: 'Memory'
+    """Describes the resource range (1-4000 GB RAM). Defaults to min=4, max=16."""
+    privacyStatementUri: str
+    """The privacy statement uri."""
+    purchasePlan: 'PurchasePlan'
+    """Describes the gallery image definition purchase plan. This is used by marketplace images."""
+    releaseNoteUri: str
+    """The release note uri. Has to be a valid URL."""
+    securityType: Literal['ConfidentialVM', 'ConfidentialVMSupported', 'Standard', 'TrustedLaunch', 'TrustedLaunchAndConfidentialVmSupported', 'TrustedLaunchSupported']
+    """The security type of the image. Requires a hyperVGeneration V2. Defaults to """
+    vCPUs: 'VCPU'
+    """Describes the resource range (1-128 CPU cores). Defaults to min=1, max=4."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -178,16 +192,24 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Gallery(TypedDict, total=False):
+class ComputeGallery(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Azure Compute Gallery."""
+    applications: List['Application']
+    """Applications to create."""
     description: str
     """Description of the Azure Shared Image Gallery."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    images: List['Image']
+    """Images to create."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     sharingProfile: Dict[str, object]
     """Profile for gallery sharing to subscription or tenant."""
     softDeletePolicy: Dict[str, object]
@@ -196,8 +218,8 @@ class Gallery(TypedDict, total=False):
     """Tags for all resources."""
 
 
-class GalleryOutputs(TypedDict, total=False):
-    """Outputs for Gallery"""
+class ComputeGalleryOutputs(TypedDict, total=False):
+    """Outputs for ComputeGallery"""
     imageResourceIds: Output[Literal['array']]
     """The resource ids of the deployed images."""
     location: Output[Literal['string']]
@@ -210,31 +232,28 @@ class GalleryOutputs(TypedDict, total=False):
     """The resource ID of the deployed image gallery."""
 
 
-class GalleryBicep(Module):
-    outputs: GalleryOutputs
+class ComputeGalleryBicep(Module):
+    outputs: ComputeGalleryOutputs
 
 
-def gallery(
+def compute_gallery(
         bicep: IO[str],
+        params: ComputeGallery,
         /,
         *,
-        params: Gallery,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.8.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/gallery',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> GalleryBicep:
-    symbol = "gallery_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeGalleryBicep:
+    symbol = "compute_gallery_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/gallery:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -247,7 +266,7 @@ def gallery(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = GalleryBicep(symbol)
+    output = ComputeGalleryBicep(symbol)
     output.outputs = {
             'imageResourceIds': Output(symbol, 'imageResourceIds', 'array'),
             'location': Output(symbol, 'location', 'string'),

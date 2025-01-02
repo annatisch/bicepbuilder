@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -55,7 +55,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class BackupVault(TypedDict, total=False):
+class DataProtectionBackupVault(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Backup Vault."""
@@ -71,6 +71,12 @@ class BackupVault(TypedDict, total=False):
     """Feature settings for the backup vault."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Backup Contributor', 'Backup Operator', 'Backup Reader', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     securitySettings: Dict[str, object]
     """Security settings for the backup vault."""
     tags: Dict[str, object]
@@ -79,8 +85,8 @@ class BackupVault(TypedDict, total=False):
     """The vault redundancy level to use."""
 
 
-class BackupVaultOutputs(TypedDict, total=False):
-    """Outputs for BackupVault"""
+class DataProtectionBackupVaultOutputs(TypedDict, total=False):
+    """Outputs for DataProtectionBackupVault"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -93,31 +99,28 @@ class BackupVaultOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class BackupVaultBicep(Module):
-    outputs: BackupVaultOutputs
+class DataProtectionBackupVaultBicep(Module):
+    outputs: DataProtectionBackupVaultOutputs
 
 
-def backup_vault(
+def data_protection_backup_vault(
         bicep: IO[str],
+        params: DataProtectionBackupVault,
         /,
         *,
-        params: BackupVault,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.7.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'data-protection/backup-vault',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> BackupVaultBicep:
-    symbol = "backup_vault_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DataProtectionBackupVaultBicep:
+    symbol = "data_protection_backup_vault_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/data-protection/backup-vault:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -130,7 +133,7 @@ def backup_vault(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = BackupVaultBicep(symbol)
+    output = DataProtectionBackupVaultBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

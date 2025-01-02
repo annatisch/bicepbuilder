@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,6 +39,8 @@ class TopicSpace(TypedDict, total=False):
     """The topic filters in the Topic Space."""
     description: str
     """Description of the Topic Space."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Resource Notifications System Topics Subscriber', 'Contributor', 'EventGrid Contributor', 'EventGrid Data Contributor', 'EventGrid Data Receiver', 'EventGrid Data Sender', 'EventGrid EventSubscription Contributor', 'EventGrid EventSubscription Reader', 'EventGrid TopicSpaces Publisher', 'EventGrid TopicSpaces Subscriber', 'Owner', 'Reader', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class TopicSpaceOutputs(TypedDict, total=False):

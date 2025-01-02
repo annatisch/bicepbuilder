@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Disk(TypedDict, total=False):
+class ComputeDisk(TypedDict, total=False):
     """"""
     availabilityZone: Required[Literal[0, 1, 2, 3]]
     """If set to 1, 2 or 3, the availability zone is hardcoded to that value. If zero, then availability zones are not used. Note that the availability zone number here are the logical availability zone in your Azure subscription. Different subscriptions might have a different mapping of the physical zone and logical zone.To understand more, please refer to """
@@ -82,6 +82,8 @@ class Disk(TypedDict, total=False):
     """A relative uri containing either a Platform Image Repository or user image reference."""
     location: str
     """Resource location."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     logicalSectorSize: int
     """Logical sector size in bytes for Ultra disks. Supported values are 512 ad 4096."""
     maxShares: int
@@ -94,6 +96,8 @@ class Disk(TypedDict, total=False):
     """Sources of a disk creation."""
     publicNetworkAccess: Literal['Disabled', 'Enabled']
     """Policy for controlling export on the disk."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Data Operator for Managed Disks', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     securityDataUri: str
     """If create option is ImportSecure, this is the URI of a blob to be imported into VM guest state."""
     sourceResourceId: str
@@ -106,8 +110,8 @@ class Disk(TypedDict, total=False):
     """If create option is Upload, this is the size of the contents of the upload including the VHD footer."""
 
 
-class DiskOutputs(TypedDict, total=False):
-    """Outputs for Disk"""
+class ComputeDiskOutputs(TypedDict, total=False):
+    """Outputs for ComputeDisk"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -118,31 +122,28 @@ class DiskOutputs(TypedDict, total=False):
     """The resource ID of the disk."""
 
 
-class DiskBicep(Module):
-    outputs: DiskOutputs
+class ComputeDiskBicep(Module):
+    outputs: ComputeDiskOutputs
 
 
-def disk(
+def compute_disk(
         bicep: IO[str],
+        params: ComputeDisk,
         /,
         *,
-        params: Disk,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/disk',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DiskBicep:
-    symbol = "disk_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeDiskBicep:
+    symbol = "compute_disk_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/disk:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -155,7 +156,7 @@ def disk(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DiskBicep(symbol)
+    output = ComputeDiskBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

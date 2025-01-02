@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class VpnClientIpsecPolicy(TypedDict, total=False):
     """The lifetime of the SA in seconds. Required if using IKEv2."""
 
 
-class VpnServerConfiguration(TypedDict, total=False):
+class NetworkVpnServerConfiguration(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the user VPN configuration."""
@@ -66,6 +66,8 @@ class VpnServerConfiguration(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location where all resources will be created."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     p2sConfigurationPolicyGroups: List[object]
     """The P2S configuration policy groups for the configuration."""
     radiusClientRootCertificates: List[object]
@@ -78,14 +80,16 @@ class VpnServerConfiguration(TypedDict, total=False):
     """Tags of the resource."""
     vpnAuthenticationTypes: Literal['AAD', 'Certificate', 'Radius']
     """The authentication types for the VPN configuration."""
+    vpnClientIpsecPolicies: List['VpnClientIpsecPolicy']
+    """The IPsec policies for the configuration."""
     vpnClientRevokedCertificates: List[object]
     """The revoked VPN Client certificate thumbprints for the configuration."""
     vpnProtocols: Literal['IkeV2', 'OpenVPN']
     """The allowed VPN protocols for the configuration."""
 
 
-class VpnServerConfigurationOutputs(TypedDict, total=False):
-    """Outputs for VpnServerConfiguration"""
+class NetworkVpnServerConfigurationOutputs(TypedDict, total=False):
+    """Outputs for NetworkVpnServerConfiguration"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -96,31 +100,28 @@ class VpnServerConfigurationOutputs(TypedDict, total=False):
     """The resource ID of the user VPN configuration."""
 
 
-class VpnServerConfigurationBicep(Module):
-    outputs: VpnServerConfigurationOutputs
+class NetworkVpnServerConfigurationBicep(Module):
+    outputs: NetworkVpnServerConfigurationOutputs
 
 
-def vpn_server_configuration(
+def network_vpn_server_configuration(
         bicep: IO[str],
+        params: NetworkVpnServerConfiguration,
         /,
         *,
-        params: VpnServerConfiguration,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/vpn-server-configuration',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VpnServerConfigurationBicep:
-    symbol = "vpn_server_configuration_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkVpnServerConfigurationBicep:
+    symbol = "network_vpn_server_configuration_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/vpn-server-configuration:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -133,7 +134,7 @@ def vpn_server_configuration(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VpnServerConfigurationBicep(symbol)
+    output = NetworkVpnServerConfigurationBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -74,7 +74,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DnsResolver(TypedDict, total=False):
+class NetworkDnsResolver(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the DNS Private Resolver."""
@@ -82,14 +82,22 @@ class DnsResolver(TypedDict, total=False):
     """ResourceId of the virtual network to attach the DNS Private Resolver to."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    inboundEndpoints: List['InboundEndpoint']
+    """Inbound Endpoints for DNS Private Resolver."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    outboundEndpoints: List['OutboundEndpoint']
+    """Outbound Endpoints for DNS Private Resolver."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class DnsResolverOutputs(TypedDict, total=False):
-    """Outputs for DnsResolver"""
+class NetworkDnsResolverOutputs(TypedDict, total=False):
+    """Outputs for NetworkDnsResolver"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -100,31 +108,28 @@ class DnsResolverOutputs(TypedDict, total=False):
     """The resource ID of the DNS Private Resolver."""
 
 
-class DnsResolverBicep(Module):
-    outputs: DnsResolverOutputs
+class NetworkDnsResolverBicep(Module):
+    outputs: NetworkDnsResolverOutputs
 
 
-def dns_resolver(
+def network_dns_resolver(
         bicep: IO[str],
+        params: NetworkDnsResolver,
         /,
         *,
-        params: DnsResolver,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/dns-resolver',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DnsResolverBicep:
-    symbol = "dns_resolver_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkDnsResolverBicep:
+    symbol = "network_dns_resolver_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/dns-resolver:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -137,7 +142,7 @@ def dns_resolver(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DnsResolverBicep(symbol)
+    output = NetworkDnsResolverBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

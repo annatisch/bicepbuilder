@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,6 +16,14 @@ from ..expressions import (
     Deployment,
     Output,
 )
+
+
+class MetricCategory(TypedDict, total=False):
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    category: Required[str]
+    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
 
 
 class DiagnosticSetting(TypedDict, total=False):
@@ -28,20 +36,14 @@ class DiagnosticSetting(TypedDict, total=False):
     """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
     marketplacePartnerResourceId: str
     """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
     name: str
     """The name of diagnostic setting."""
     storageAccountResourceId: str
     """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     workspaceResourceId: str
     """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
-class MetricCategory(TypedDict, total=False):
-    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
-    category: Required[str]
-    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
-    enabled: bool
-    """Enable or disable the category explicitly. Default is """
 
 
 class Lock(TypedDict, total=False):
@@ -72,7 +74,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Serverfarm(TypedDict, total=False):
+class WebServerfarm(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the app service plan."""
@@ -80,6 +82,8 @@ class Serverfarm(TypedDict, total=False):
     """Defaults to false when creating Windows/app App Service Plan. Required if creating a Linux App Service Plan and must be set to true."""
     appServiceEnvironmentId: str
     """The Resource ID of the App Service Environment to use for the App Service Plan."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     elasticScaleEnabled: bool
     """Enable/Disable ElasticScaleEnabled App Service Plan."""
     enableTelemetry: bool
@@ -88,10 +92,14 @@ class Serverfarm(TypedDict, total=False):
     """Kind of server OS."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maximumElasticWorkerCount: int
     """Maximum number of total workers allowed for this ElasticScaleEnabled App Service Plan."""
     perSiteScaling: bool
     """If true, apps assigned to this App Service plan can be scaled independently. If false, apps assigned to this App Service plan will scale to all instances of the plan."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Web Plan Contributor', 'Website Contributor']]]
+    """Array of role assignments to create."""
     skuCapacity: int
     """Number of workers associated with the App Service Plan. This defaults to 3, to leverage availability zones."""
     skuName: str
@@ -108,8 +116,8 @@ class Serverfarm(TypedDict, total=False):
     """Zone Redundant server farms can only be used on Premium or ElasticPremium SKU tiers within ZRS Supported regions (https://learn.microsoft.com/en-us/azure/storage/common/redundancy-regions-zrs)."""
 
 
-class ServerfarmOutputs(TypedDict, total=False):
-    """Outputs for Serverfarm"""
+class WebServerfarmOutputs(TypedDict, total=False):
+    """Outputs for WebServerfarm"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -120,31 +128,28 @@ class ServerfarmOutputs(TypedDict, total=False):
     """The resource ID of the app service plan."""
 
 
-class ServerfarmBicep(Module):
-    outputs: ServerfarmOutputs
+class WebServerfarmBicep(Module):
+    outputs: WebServerfarmOutputs
 
 
-def serverfarm(
+def web_serverfarm(
         bicep: IO[str],
+        params: WebServerfarm,
         /,
         *,
-        params: Serverfarm,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'web/serverfarm',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ServerfarmBicep:
-    symbol = "serverfarm_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> WebServerfarmBicep:
+    symbol = "web_serverfarm_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/web/serverfarm:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -157,7 +162,7 @@ def serverfarm(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ServerfarmBicep(symbol)
+    output = WebServerfarmBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

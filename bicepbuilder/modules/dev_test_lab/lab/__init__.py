@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -150,22 +150,6 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Schedule(TypedDict, total=False):
-    """Schedules to create for the lab."""
-    name: Required[Literal['LabVmAutoStart', 'LabVmsShutdown']]
-    """The name of the schedule."""
-    taskType: Required[Literal['LabVmsShutdownTask', 'LabVmsStartupTask']]
-    """The task type of the schedule (e.g. LabVmsShutdownTask, LabVmsStartupTask)."""
-    status: Literal['Disabled', 'Enabled']
-    """The status of the schedule (i.e. Enabled, Disabled). Default is "Enabled"."""
-    tags: Dict[str, object]
-    """The tags of the schedule."""
-    targetResourceId: str
-    """The resource ID to which the schedule belongs."""
-    timeZoneId: str
-    """The time zone ID of the schedule. Defaults to "Pacific Standard time"."""
-
-
 class DailyRecurrence(TypedDict, total=False):
     """The daily recurrence of the schedule."""
     time: Required[str]
@@ -200,16 +184,28 @@ class WeeklyRecurrence(TypedDict, total=False):
     """The days of the week for which the schedule is set (e.g. Sunday, Monday, Tuesday, etc.)."""
 
 
-class Virtualnetwork(TypedDict, total=False):
-    """Virtual networks to create for the lab."""
-    externalProviderResourceId: Required[str]
-    """The external provider resource ID of the virtual network."""
-    name: Required[str]
-    """The name of the virtual network."""
-    description: str
-    """The description of the virtual network."""
+class Schedule(TypedDict, total=False):
+    """Schedules to create for the lab."""
+    name: Required[Literal['LabVmAutoStart', 'LabVmsShutdown']]
+    """The name of the schedule."""
+    taskType: Required[Literal['LabVmsShutdownTask', 'LabVmsStartupTask']]
+    """The task type of the schedule (e.g. LabVmsShutdownTask, LabVmsStartupTask)."""
+    dailyRecurrence: 'DailyRecurrence'
+    """The daily recurrence of the schedule."""
+    hourlyRecurrence: 'HourlyRecurrence'
+    """If the schedule will occur multiple times a day, specify the hourly recurrence."""
+    notificationSettings: 'NotificationSetting'
+    """The notification settings for the schedule."""
+    status: Literal['Disabled', 'Enabled']
+    """The status of the schedule (i.e. Enabled, Disabled). Default is "Enabled"."""
     tags: Dict[str, object]
-    """The tags of the virtual network."""
+    """The tags of the schedule."""
+    targetResourceId: str
+    """The resource ID to which the schedule belongs."""
+    timeZoneId: str
+    """The time zone ID of the schedule. Defaults to "Pacific Standard time"."""
+    weeklyRecurrence: 'WeeklyRecurrence'
+    """If the schedule will occur only some days of the week, specify the weekly recurrence."""
 
 
 class AllowedSubnet(TypedDict, total=False):
@@ -222,24 +218,6 @@ class AllowedSubnet(TypedDict, total=False):
     """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
 
 
-class SubnetOverride(TypedDict, total=False):
-    """The subnet overrides of the virtual network."""
-    labSubnetName: Required[str]
-    """The name given to the subnet within the lab."""
-    resourceId: Required[str]
-    """The resource ID of the subnet."""
-    useInVmCreationPermission: Literal['Allow', 'Default', 'Deny']
-    """Indicates whether this subnet can be used during virtual machine creation (i.e. Allow, Deny)."""
-    usePublicIpAddressPermission: Literal['Allow', 'Default', 'Deny']
-    """Indicates whether public IP addresses can be assigned to virtual machines on this subnet (i.e. Allow, Deny)."""
-    virtualNetworkPoolName: str
-    """The virtual network pool associated with this subnet."""
-
-
-class SharedPublicIpAddressConfiguration(TypedDict, total=False):
-    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
-
-
 class AllowedPort(TypedDict, total=False):
     """Backend ports that virtual machines on this subnet are allowed to expose."""
     backendPort: Required[int]
@@ -248,18 +226,62 @@ class AllowedPort(TypedDict, total=False):
     """Protocol type of the port."""
 
 
-class Lab(TypedDict, total=False):
+class SharedPublicIpAddressConfiguration(TypedDict, total=False):
+    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
+    allowedPorts: Required[List['AllowedPort']]
+    """Backend ports that virtual machines on this subnet are allowed to expose."""
+
+
+class SubnetOverride(TypedDict, total=False):
+    """The subnet overrides of the virtual network."""
+    labSubnetName: Required[str]
+    """The name given to the subnet within the lab."""
+    resourceId: Required[str]
+    """The resource ID of the subnet."""
+    sharedPublicIpAddressConfiguration: 'SharedPublicIpAddressConfiguration'
+    """The permission policy of the subnet for allowing public IP addresses (i.e. Allow, Deny))."""
+    useInVmCreationPermission: Literal['Allow', 'Default', 'Deny']
+    """Indicates whether this subnet can be used during virtual machine creation (i.e. Allow, Deny)."""
+    usePublicIpAddressPermission: Literal['Allow', 'Default', 'Deny']
+    """Indicates whether public IP addresses can be assigned to virtual machines on this subnet (i.e. Allow, Deny)."""
+    virtualNetworkPoolName: str
+    """The virtual network pool associated with this subnet."""
+
+
+class Virtualnetwork(TypedDict, total=False):
+    """Virtual networks to create for the lab."""
+    externalProviderResourceId: Required[str]
+    """The external provider resource ID of the virtual network."""
+    name: Required[str]
+    """The name of the virtual network."""
+    allowedSubnets: List['AllowedSubnet']
+    """The allowed subnets of the virtual network."""
+    description: str
+    """The description of the virtual network."""
+    subnetOverrides: List['SubnetOverride']
+    """The subnet overrides of the virtual network."""
+    tags: Dict[str, object]
+    """The tags of the virtual network."""
+
+
+class DevTestLab(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the lab."""
     encryptionDiskEncryptionSetId: str
     """The Disk Encryption Set Resource ID used to encrypt OS and data disks created as part of the the lab. Required if encryptionType is set to "EncryptionAtRestWithCustomerKey"."""
+    notificationchannels: List['Notificationchannel']
+    """Notification Channels to create for the lab. Required if the schedules property "notificationSettingsStatus" is set to "Enabled."""
     announcement: Dict[str, object]
     """The properties of any lab announcement associated with this lab."""
+    artifactsources: List['Artifactsource']
+    """Artifact sources to create for the lab."""
     artifactsStorageAccount: str
     """The resource ID of the storage account used to store artifacts and images by the lab. Also used for defaultStorageAccount, defaultPremiumStorageAccount and premiumDataDiskStorageAccount properties. If left empty, a default storage account will be created by the lab and used."""
     browserConnect: Literal['Disabled', 'Enabled']
     """Enable browser connect on virtual machines if the lab's VNETs have configured Azure Bastion."""
+    costs: 'Cost'
+    """Costs to create for the lab."""
     disableAutoUpgradeCseMinorVersion: bool
     """Disable auto upgrade custom script extension minor version."""
     enableTelemetry: bool
@@ -276,24 +298,36 @@ class Lab(TypedDict, total=False):
     """Type of storage used by the lab. It can be either Premium or Standard."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. For new labs created after 8/10/2020, the lab's system assigned identity is set to On by default and lab owner will not be able to turn this off for the lifecycle of the lab."""
     managementIdentitiesResourceIds: List[object]
     """The resource ID(s) to assign to the virtual machines associated with this lab."""
     mandatoryArtifactsResourceIdsLinux: List[object]
     """The ordered list of artifact resource IDs that should be applied on all Linux VM creations by default, prior to the artifacts specified by the user."""
     mandatoryArtifactsResourceIdsWindows: List[object]
     """The ordered list of artifact resource IDs that should be applied on all Windows VM creations by default, prior to the artifacts specified by the user."""
+    policies: List['Policy']
+    """Policies to create for the lab."""
     premiumDataDisks: Literal['Disabled', 'Enabled']
     """The setting to enable usage of premium data disks. When its value is "Enabled", creation of standard or premium data disks is allowed. When its value is "Disabled", only creation of standard data disks is allowed. Default is "Disabled"."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DevTest Labs User', 'Owner', 'Reader', 'Resource Policy Contributor', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Contributor']]]
+    """Array of role assignments to create."""
+    schedules: List['Schedule']
+    """Schedules to create for the lab."""
     support: Dict[str, object]
     """The properties of any lab support message associated with this lab."""
     tags: Dict[str, object]
     """Tags of the resource."""
+    virtualnetworks: List['Virtualnetwork']
+    """Virtual networks to create for the lab."""
     vmCreationResourceGroupId: str
     """Resource Group allocation for virtual machines. If left empty, virtual machines will be deployed in their own Resource Groups. Default is the same Resource Group for DevTest Lab."""
 
 
-class LabOutputs(TypedDict, total=False):
-    """Outputs for Lab"""
+class DevTestLabOutputs(TypedDict, total=False):
+    """Outputs for DevTestLab"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -308,31 +342,28 @@ class LabOutputs(TypedDict, total=False):
     """The unique identifier for the lab. Used to track tags that the lab applies to each resource that it creates."""
 
 
-class LabBicep(Module):
-    outputs: LabOutputs
+class DevTestLabBicep(Module):
+    outputs: DevTestLabOutputs
 
 
-def lab(
+def dev_test_lab(
         bicep: IO[str],
+        params: DevTestLab,
         /,
         *,
-        params: Lab,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'dev-test-lab/lab',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> LabBicep:
-    symbol = "lab_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DevTestLabBicep:
+    symbol = "dev_test_lab_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/dev-test-lab/lab:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -345,7 +376,7 @@ def lab(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = LabBicep(symbol)
+    output = DevTestLabBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -30,7 +30,7 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class VirtualHub(TypedDict, total=False):
+class NetworkVirtualHub(TypedDict, total=False):
     """"""
     addressPrefix: Required[str]
     """Address-prefix for this VirtualHub."""
@@ -56,6 +56,8 @@ class VirtualHub(TypedDict, total=False):
     """Configures Routing Intent to forward Internet traffic (0.0.0.0/0) to Azure Firewall. Default is true."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     p2SVpnGatewayId: str
     """Resource ID of the Point-to-Site VPN Gateway to link to."""
     preferredRoutingGateway: Literal['', 'ExpressRoute', 'None', 'VpnGateway']
@@ -82,8 +84,8 @@ class VirtualHub(TypedDict, total=False):
     """Resource ID of the VPN Gateway to link to."""
 
 
-class VirtualHubOutputs(TypedDict, total=False):
-    """Outputs for VirtualHub"""
+class NetworkVirtualHubOutputs(TypedDict, total=False):
+    """Outputs for NetworkVirtualHub"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -94,31 +96,28 @@ class VirtualHubOutputs(TypedDict, total=False):
     """The resource ID of the virtual hub."""
 
 
-class VirtualHubBicep(Module):
-    outputs: VirtualHubOutputs
+class NetworkVirtualHubBicep(Module):
+    outputs: NetworkVirtualHubOutputs
 
 
-def virtual_hub(
+def network_virtual_hub(
         bicep: IO[str],
+        params: NetworkVirtualHub,
         /,
         *,
-        params: VirtualHub,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/virtual-hub',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VirtualHubBicep:
-    symbol = "virtual_hub_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkVirtualHubBicep:
+    symbol = "network_virtual_hub_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/virtual-hub:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -131,7 +130,7 @@ def virtual_hub(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VirtualHubBicep(symbol)
+    output = NetworkVirtualHubBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

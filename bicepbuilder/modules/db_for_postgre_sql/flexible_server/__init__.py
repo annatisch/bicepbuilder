@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -42,24 +42,6 @@ class CustomerManagedKey(TypedDict, total=False):
     """User assigned identity to use when fetching the customer managed key. Required if no system assigned identity is available for use."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -78,6 +60,28 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -86,46 +90,12 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints. Used when the desired connectivy mode is 'Public Access' and 'delegatedSubnetResourceId' is NOT used."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the Private Endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the Private Endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the Private Endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the Private Endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
-    service: str
-    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/Resource Groups in this deployment."""
-
-
 class CustomDnsConfig(TypedDict, total=False):
     """Custom DNS configurations."""
     ipAddresses: Required[List[object]]
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -138,18 +108,20 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS Zone Group to configure for the Private Endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
 
 
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
@@ -160,6 +132,14 @@ class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The name of the private DNS Zone Group config."""
 
 
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -180,6 +160,44 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. Used when the desired connectivy mode is 'Public Access' and 'delegatedSubnetResourceId' is NOT used."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the Private Endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the Private Endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the Private Endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the Private Endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
+    service: str
+    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/Resource Groups in this deployment."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -200,7 +218,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class FlexibleServer(TypedDict, total=False):
+class DbForPostgreSqlFlexibleServer(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the PostgreSQL flexible server."""
@@ -208,6 +226,8 @@ class FlexibleServer(TypedDict, total=False):
     """The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3."""
     tier: Required[Literal['Burstable', 'GeneralPurpose', 'MemoryOptimized']]
     """The tier of the particular SKU. Tier must align with the 'skuName' property. Example, tier cannot be 'Burstable' if skuName is 'Standard_D4s_v3'."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. Required if 'cMKKeyName' is not empty."""
     pointInTimeUTC: str
     """Required if 'createMode' is set to 'PointInTimeRestore'."""
     sourceServerResourceId: str
@@ -226,10 +246,14 @@ class FlexibleServer(TypedDict, total=False):
     """The configurations to create in the server."""
     createMode: Literal['Create', 'Default', 'GeoRestore', 'PointInTimeRestore', 'Replica', 'Update']
     """The mode to create a new PostgreSQL server."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
     databases: List['Database']
     """The databases to create in the server."""
     delegatedSubnetResourceId: str
     """Delegated subnet arm resource ID. Used when the desired connectivity mode is 'Private Access' - virtual network integration."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     firewallRules: List['FirewallRule']
@@ -240,10 +264,16 @@ class FlexibleServer(TypedDict, total=False):
     """The mode for high availability."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maintenanceWindow: Dict[str, object]
     """Properties for the maintenence window. If provided, 'customWindow' property must exist and set to 'Enabled'."""
     privateDnsZoneArmResourceId: str
     """Private dns zone arm resource ID. Used when the desired connectivity mode is 'Private Access' and required when 'delegatedSubnetResourceId' is used. The Private DNS Zone must be linked to the Virtual Network referenced in 'delegatedSubnetResourceId'."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints. Used when the desired connectivy mode is 'Public Access' and 'delegatedSubnetResourceId' is NOT used."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     storageSizeGB: Literal[32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384]
     """Max storage allowed for a server."""
     tags: Dict[str, object]
@@ -254,8 +284,8 @@ class FlexibleServer(TypedDict, total=False):
     """PostgreSQL Server version."""
 
 
-class FlexibleServerOutputs(TypedDict, total=False):
-    """Outputs for FlexibleServer"""
+class DbForPostgreSqlFlexibleServerOutputs(TypedDict, total=False):
+    """Outputs for DbForPostgreSqlFlexibleServer"""
     fqdn: Output[Literal['string']]
     """The FQDN of the PostgreSQL Flexible server."""
     location: Output[Literal['string']]
@@ -268,31 +298,28 @@ class FlexibleServerOutputs(TypedDict, total=False):
     """The resource ID of the deployed PostgreSQL Flexible server."""
 
 
-class FlexibleServerBicep(Module):
-    outputs: FlexibleServerOutputs
+class DbForPostgreSqlFlexibleServerBicep(Module):
+    outputs: DbForPostgreSqlFlexibleServerOutputs
 
 
-def flexible_server(
+def db_for_postgre_sql_flexible_server(
         bicep: IO[str],
+        params: DbForPostgreSqlFlexibleServer,
         /,
         *,
-        params: FlexibleServer,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.6.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'db-for-postgre-sql/flexible-server',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> FlexibleServerBicep:
-    symbol = "flexible_server_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DbForPostgreSqlFlexibleServerBicep:
+    symbol = "db_for_postgre_sql_flexible_server_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/db-for-postgre-sql/flexible-server:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -305,7 +332,7 @@ def flexible_server(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = FlexibleServerBicep(symbol)
+    output = DbForPostgreSqlFlexibleServerBicep(symbol)
     output.outputs = {
             'fqdn': Output(symbol, 'fqdn', 'string'),
             'location': Output(symbol, 'location', 'string'),

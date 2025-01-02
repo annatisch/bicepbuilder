@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,7 +18,7 @@ from ..expressions import (
 )
 
 
-class Budget(TypedDict, total=False):
+class ConsumptionBudget(TypedDict, total=False):
     """"""
     amount: Required[int]
     """The total amount of cost or usage to track with the budget."""
@@ -54,8 +54,8 @@ class Budget(TypedDict, total=False):
     """The type of threshold to use for the budget. The threshold type can be either """
 
 
-class BudgetOutputs(TypedDict, total=False):
-    """Outputs for Budget"""
+class ConsumptionBudgetOutputs(TypedDict, total=False):
+    """Outputs for ConsumptionBudget"""
     name: Output[Literal['string']]
     """The name of the budget."""
     resourceId: Output[Literal['string']]
@@ -64,31 +64,28 @@ class BudgetOutputs(TypedDict, total=False):
     """The subscription the budget was deployed into."""
 
 
-class BudgetBicep(Module):
-    outputs: BudgetOutputs
+class ConsumptionBudgetBicep(Module):
+    outputs: ConsumptionBudgetOutputs
 
 
-def budget(
+def consumption_budget(
         bicep: IO[str],
+        params: ConsumptionBudget,
         /,
         *,
-        params: Budget,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'consumption/budget',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> BudgetBicep:
-    symbol = "budget_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ConsumptionBudgetBicep:
+    symbol = "consumption_budget_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/consumption/budget:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -101,7 +98,7 @@ def budget(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = BudgetBicep(symbol)
+    output = ConsumptionBudgetBicep(symbol)
     output.outputs = {
             'name': Output(symbol, 'name', 'string'),
             'resourceId': Output(symbol, 'resourceId', 'string'),

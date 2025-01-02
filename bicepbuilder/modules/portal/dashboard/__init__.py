@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Dashboard(TypedDict, total=False):
+class PortalDashboard(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the dashboard to create."""
@@ -56,14 +56,18 @@ class Dashboard(TypedDict, total=False):
     """The dashboard lenses."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     metadata: Dict[str, object]
     """The dashboard metadata."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class DashboardOutputs(TypedDict, total=False):
-    """Outputs for Dashboard"""
+class PortalDashboardOutputs(TypedDict, total=False):
+    """Outputs for PortalDashboard"""
     location: Output[Literal['string']]
     """The location the dashboard was deployed into."""
     name: Output[Literal['string']]
@@ -74,31 +78,28 @@ class DashboardOutputs(TypedDict, total=False):
     """The resource ID of the dashboard."""
 
 
-class DashboardBicep(Module):
-    outputs: DashboardOutputs
+class PortalDashboardBicep(Module):
+    outputs: PortalDashboardOutputs
 
 
-def dashboard(
+def portal_dashboard(
         bicep: IO[str],
+        params: PortalDashboard,
         /,
         *,
-        params: Dashboard,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'portal/dashboard',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DashboardBicep:
-    symbol = "dashboard_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> PortalDashboardBicep:
+    symbol = "portal_dashboard_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/portal/dashboard:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -111,7 +112,7 @@ def dashboard(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DashboardBicep(symbol)
+    output = PortalDashboardBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

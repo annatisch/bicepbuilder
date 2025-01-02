@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Machine(TypedDict, total=False):
+class HybridComputeMachine(TypedDict, total=False):
     """"""
     kind: Required[str]
     """Kind of Arc machine to be created. Possible values are: HCI, SCVMM, VMware."""
@@ -64,20 +64,24 @@ class Machine(TypedDict, total=False):
     """The guest configuration for the Arc machine. Needs the Guest Configuration extension to be enabled."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     parentClusterResourceId: str
     """Parent cluster resource ID (Azure Stack HCI)."""
     patchAssessmentMode: Literal['AutomaticByPlatform', 'ImageDefault']
     """VM guest patching assessment mode. Set it to 'AutomaticByPlatform' to enable automatically check for updates every 24 hours."""
     patchMode: Literal['AutomaticByOS', 'AutomaticByPlatform', 'ImageDefault', 'Manual']
     """VM guest patching orchestration mode. 'AutomaticByOS' & 'Manual' are for Windows only, 'ImageDefault' for Linux only."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Arc machine Administrator Login', 'Arc machine Contributor', 'Arc machine User Login', 'Windows Admin Center Administrator Login']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     vmId: str
     """The GUID of the on-premises virtual machine from your hypervisor."""
 
 
-class MachineOutputs(TypedDict, total=False):
-    """Outputs for Machine"""
+class HybridComputeMachineOutputs(TypedDict, total=False):
+    """Outputs for HybridComputeMachine"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -90,31 +94,28 @@ class MachineOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class MachineBicep(Module):
-    outputs: MachineOutputs
+class HybridComputeMachineBicep(Module):
+    outputs: HybridComputeMachineOutputs
 
 
-def machine(
+def hybrid_compute_machine(
         bicep: IO[str],
+        params: HybridComputeMachine,
         /,
         *,
-        params: Machine,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'hybrid-compute/machine',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> MachineBicep:
-    symbol = "machine_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> HybridComputeMachineBicep:
+    symbol = "hybrid_compute_machine_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/hybrid-compute/machine:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -127,7 +128,7 @@ def machine(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = MachineBicep(symbol)
+    output = HybridComputeMachineBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

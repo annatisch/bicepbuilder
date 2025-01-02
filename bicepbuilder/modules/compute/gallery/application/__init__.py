@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,16 +9,6 @@ from ...expressions import (
     Deployment,
     Output,
 )
-
-
-class CustomAction(TypedDict, total=False):
-    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
-    name: Required[str]
-    """The name of the custom action. Must be unique within the Gallery Application Version."""
-    script: Required[str]
-    """The script to run when executing this custom action."""
-    description: str
-    """Description to help the users understand what this custom action does."""
 
 
 class Parameter(TypedDict, total=False):
@@ -40,6 +23,18 @@ class Parameter(TypedDict, total=False):
     """Indicates whether this parameter must be passed when running the custom action."""
     type: Literal['ConfigurationDataBlob', 'LogOutputBlob', 'String']
     """Specifies the type of the custom action parameter."""
+
+
+class CustomAction(TypedDict, total=False):
+    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
+    name: Required[str]
+    """The name of the custom action. Must be unique within the Gallery Application Version."""
+    script: Required[str]
+    """The script to run when executing this custom action."""
+    description: str
+    """Description to help the users understand what this custom action does."""
+    parameters: List['Parameter']
+    """The parameters that this custom action uses."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -68,6 +63,8 @@ class Application(TypedDict, total=False):
     """Name of the application definition."""
     supportedOSType: Required[Literal['Linux', 'Windows']]
     """This property allows you to specify the supported type of the OS that application is built for."""
+    customActions: List['CustomAction']
+    """A list of custom actions that can be performed with all of the Gallery Application Versions within this Gallery Application."""
     description: str
     """The description of this gallery Application Definition resource. This property is updatable."""
     endOfLifeDate: str
@@ -80,6 +77,8 @@ class Application(TypedDict, total=False):
     """The privacy statement uri. Has to be a valid URL."""
     releaseNoteUri: str
     """The release note uri. Has to be a valid URL."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Compute Gallery Sharing Admin', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags for all resources."""
 

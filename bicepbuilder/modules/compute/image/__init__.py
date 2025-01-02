@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -38,7 +38,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Image(TypedDict, total=False):
+class ComputeImage(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the image."""
@@ -68,6 +68,8 @@ class Image(TypedDict, total=False):
     """Specifies the caching requirements. Default: None for Standard storage. ReadOnly for Premium storage. - None, ReadOnly, ReadWrite."""
     osState: Literal['Generalized', 'Specialized']
     """The OS State. For managed images, use Generalized."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     snapshotResourceId: str
     """The snapshot resource ID."""
     sourceVirtualMachineResourceId: str
@@ -78,8 +80,8 @@ class Image(TypedDict, total=False):
     """Default is false. Specifies whether an image is zone resilient or not. Zone resilient images can be created only in regions that provide Zone Redundant Storage (ZRS)."""
 
 
-class ImageOutputs(TypedDict, total=False):
-    """Outputs for Image"""
+class ComputeImageOutputs(TypedDict, total=False):
+    """Outputs for ComputeImage"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -90,31 +92,28 @@ class ImageOutputs(TypedDict, total=False):
     """The resource ID of the image."""
 
 
-class ImageBicep(Module):
-    outputs: ImageOutputs
+class ComputeImageBicep(Module):
+    outputs: ComputeImageOutputs
 
 
-def image(
+def compute_image(
         bicep: IO[str],
+        params: ComputeImage,
         /,
         *,
-        params: Image,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/image',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ImageBicep:
-    symbol = "image_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeImageBicep:
+    symbol = "compute_image_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/image:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -127,7 +126,7 @@ def image(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ImageBicep(symbol)
+    output = ComputeImageBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

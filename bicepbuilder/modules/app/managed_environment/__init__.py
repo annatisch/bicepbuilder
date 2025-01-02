@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -74,7 +74,7 @@ class Storage(TypedDict, total=False):
     """Storage account name."""
 
 
-class ManagedEnvironment(TypedDict, total=False):
+class AppManagedEnvironment(TypedDict, total=False):
     """"""
     logAnalyticsWorkspaceResourceId: Required[str]
     """Existing Log Analytics Workspace resource ID. Note: This value is not required as per the resource type. However, not providing it currently causes an issue that is tracked """
@@ -96,6 +96,8 @@ class ManagedEnvironment(TypedDict, total=False):
     """Workload profiles configured for the Managed Environment. Required if zoneRedundant is set to true to make the resource WAF compliant."""
     appInsightsConnectionString: str
     """Application Insights connection string."""
+    certificateKeyVaultProperties: 'CertificateKeyVaultProperty'
+    """A key vault reference to the certificate to use for the custom domain."""
     certificatePassword: str
     """Password of the certificate used by the custom domain."""
     certificateValue: str
@@ -110,20 +112,28 @@ class ManagedEnvironment(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     logsDestination: str
     """Logs destination."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     openTelemetryConfiguration: Dict[str, object]
     """Open Telemetry configuration."""
     peerTrafficEncryption: bool
     """Whether or not to encrypt peer traffic."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    storages: List['Storage']
+    """The list of storages to mount on the environment."""
     tags: Dict[str, object]
     """Tags of the resource."""
     zoneRedundant: bool
     """Whether or not this Managed Environment is zone-redundant."""
 
 
-class ManagedEnvironmentOutputs(TypedDict, total=False):
-    """Outputs for ManagedEnvironment"""
+class AppManagedEnvironmentOutputs(TypedDict, total=False):
+    """Outputs for AppManagedEnvironment"""
     defaultDomain: Output[Literal['string']]
     """The Default domain of the Managed Environment."""
     location: Output[Literal['string']]
@@ -140,31 +150,28 @@ class ManagedEnvironmentOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ManagedEnvironmentBicep(Module):
-    outputs: ManagedEnvironmentOutputs
+class AppManagedEnvironmentBicep(Module):
+    outputs: AppManagedEnvironmentOutputs
 
 
-def managed_environment(
+def app_managed_environment(
         bicep: IO[str],
+        params: AppManagedEnvironment,
         /,
         *,
-        params: ManagedEnvironment,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.8.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'app/managed-environment',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ManagedEnvironmentBicep:
-    symbol = "managed_environment_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> AppManagedEnvironmentBicep:
+    symbol = "app_managed_environment_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/app/managed-environment:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -177,7 +184,7 @@ def managed_environment(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ManagedEnvironmentBicep(symbol)
+    output = AppManagedEnvironmentBicep(symbol)
     output.outputs = {
             'defaultDomain': Output(symbol, 'defaultDomain', 'string'),
             'location': Output(symbol, 'location', 'string'),

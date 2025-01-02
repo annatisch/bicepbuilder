@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -57,8 +50,12 @@ class HybridConnection(TypedDict, total=False):
     """The user metadata is a placeholder to store user-defined string data for the hybrid connection endpoint. For example, it can be used to store descriptive data, such as a list of teams and their contact information. Also, user-defined configuration settings can be stored."""
     authorizationRules: List['AuthorizationRule']
     """Authorization Rules for the Relay Hybrid Connection."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     requiresClientAuthorization: bool
     """A value indicating if this hybrid connection requires client authorization."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Relay Listener', 'Azure Relay Owner', 'Azure Relay Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class HybridConnectionOutputs(TypedDict, total=False):

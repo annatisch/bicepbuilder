@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,6 +16,14 @@ from ..expressions import (
     Deployment,
     Output,
 )
+
+
+class MetricCategory(TypedDict, total=False):
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    category: Required[str]
+    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
+    enabled: bool
+    """Enable or disable the category explicitly. Default is """
 
 
 class DiagnosticSetting(TypedDict, total=False):
@@ -28,20 +36,14 @@ class DiagnosticSetting(TypedDict, total=False):
     """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
     marketplacePartnerResourceId: str
     """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
     name: str
     """The name of diagnostic setting."""
     storageAccountResourceId: str
     """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     workspaceResourceId: str
     """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
-class MetricCategory(TypedDict, total=False):
-    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
-    category: Required[str]
-    """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
-    enabled: bool
-    """Enable or disable the category explicitly. Default is """
 
 
 class Lock(TypedDict, total=False):
@@ -80,7 +82,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class VirtualMachineScaleSet(TypedDict, total=False):
+class ComputeVirtualMachineScaleSet(TypedDict, total=False):
     """"""
     adminPassword: Required[str]
     """When specifying a Windows Virtual Machine, this value should be passed."""
@@ -116,6 +118,8 @@ class VirtualMachineScaleSet(TypedDict, total=False):
     """Custom data associated to the VM, this value will be automatically converted into base64 to account for the expected VM format."""
     dataDisks: List[object]
     """Specifies the data disks. For security reasons, it is recommended to specify DiskEncryptionSet into the dataDisk object. Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VM Scale sets."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableAutomaticRollback: bool
     """Whether OS image rollback feature should be disabled."""
     disablePasswordAuthentication: bool
@@ -160,6 +164,10 @@ class VirtualMachineScaleSet(TypedDict, total=False):
     """Specifies that the image or disk that is being used was licensed on-premises. This element is only used for images that contain the Windows Server operating system."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     maxBatchInstancePercent: int
     """The maximum percent of total virtual machine instances that will be upgraded simultaneously by the rolling upgrade in one batch. As this is a maximum, unhealthy instances in previous or future batches can cause the percentage of instances in a batch to decrease to ensure higher reliability."""
     maxPriceForLowPriorityVm: int
@@ -194,6 +202,8 @@ class VirtualMachineScaleSet(TypedDict, total=False):
     """The list of SSH public keys used to authenticate with linux based VMs."""
     rebootSetting: Literal['Always', 'IfRequired', 'Never', 'Unknown']
     """Specifies the reboot setting for all AutomaticByPlatform patch installation operations."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Data Operator for Managed Disks', 'Desktop Virtualization Power On Contributor', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Virtual Machine Contributor', 'DevTest Labs User', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Administrator Login', 'Virtual Machine Contributor', 'Virtual Machine User Login', 'VM Scanner Operator']]]
+    """Array of role assignments to create."""
     rollbackFailedInstancesOnPolicyBreach: bool
     """Rollback failed instances to previous model if the Rolling Upgrade policy is violated."""
     sasTokenValidityLength: str
@@ -236,8 +246,8 @@ class VirtualMachineScaleSet(TypedDict, total=False):
     """Do not provide a value! This date value is used to generate a registration token."""
 
 
-class VirtualMachineScaleSetOutputs(TypedDict, total=False):
-    """Outputs for VirtualMachineScaleSet"""
+class ComputeVirtualMachineScaleSetOutputs(TypedDict, total=False):
+    """Outputs for ComputeVirtualMachineScaleSet"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -250,31 +260,28 @@ class VirtualMachineScaleSetOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class VirtualMachineScaleSetBicep(Module):
-    outputs: VirtualMachineScaleSetOutputs
+class ComputeVirtualMachineScaleSetBicep(Module):
+    outputs: ComputeVirtualMachineScaleSetOutputs
 
 
-def virtual_machine_scale_set(
+def compute_virtual_machine_scale_set(
         bicep: IO[str],
+        params: ComputeVirtualMachineScaleSet,
         /,
         *,
-        params: VirtualMachineScaleSet,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/virtual-machine-scale-set',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VirtualMachineScaleSetBicep:
-    symbol = "virtual_machine_scale_set_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeVirtualMachineScaleSetBicep:
+    symbol = "compute_virtual_machine_scale_set_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/virtual-machine-scale-set:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -287,7 +294,7 @@ def virtual_machine_scale_set(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VirtualMachineScaleSetBicep(symbol)
+    output = ComputeVirtualMachineScaleSetBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

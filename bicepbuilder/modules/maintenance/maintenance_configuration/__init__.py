@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -58,12 +58,16 @@ class MaintenanceConfiguration(TypedDict, total=False):
     """Configuration settings for VM guest patching with Azure Update Manager."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maintenanceScope: Literal['Extension', 'Host', 'InGuestPatch', 'OSImage', 'SQLDB', 'SQLManagedInstance']
     """Gets or sets maintenanceScope of the configuration."""
     maintenanceWindow: Dict[str, object]
     """Definition of a MaintenanceWindow."""
     namespace: str
     """Gets or sets namespace of the resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'Scheduled Patching Contributor', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Gets or sets tags of the resource."""
     visibility: Literal['', 'Custom', 'Public']
@@ -88,25 +92,22 @@ class MaintenanceConfigurationBicep(Module):
 
 def maintenance_configuration(
         bicep: IO[str],
+        params: MaintenanceConfiguration,
         /,
         *,
-        params: MaintenanceConfiguration,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'maintenance/maintenance-configuration',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
 ) -> MaintenanceConfigurationBicep:
     symbol = "maintenance_configuration_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/maintenance/maintenance-configuration:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")

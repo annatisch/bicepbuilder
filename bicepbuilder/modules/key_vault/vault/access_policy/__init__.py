@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -36,8 +29,12 @@ class Permission(TypedDict, total=False):
 
 class AccessPolicy(TypedDict, total=False):
     """"""
+    accessPolicies: List['AccessPolicy']
+    """An array of 0 to 16 identities that have access to the key vault. All identities in the array must use the same tenant ID as the key vault's tenant ID."""
     objectId: Required[str]
     """The object ID of a user, service principal or security group in the tenant for the vault."""
+    permissions: Required['Permission']
+    """Permissions the identity has for keys, secrets and certificates."""
     applicationId: str
     """Application ID of the client making request on behalf of a principal."""
     tenantId: str

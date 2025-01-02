@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,24 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -52,6 +34,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -74,7 +78,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Component(TypedDict, total=False):
+class InsightsComponent(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Application Insights."""
@@ -82,6 +86,8 @@ class Component(TypedDict, total=False):
     """Resource ID of the log analytics workspace which the data will be ingested to. This property is required to create an application with this API version. Applications from older versions will not have this property."""
     applicationType: Literal['other', 'web']
     """Application type."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableIpMasking: bool
     """Disable IP masking. Default value is set to true."""
     disableLocalAuth: bool
@@ -102,14 +108,16 @@ class Component(TypedDict, total=False):
     """The network access type for accessing Application Insights query. - Enabled or Disabled."""
     retentionInDays: Literal[30, 60, 90, 120, 180, 270, 365, 550, 730]
     """Retention period in days."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Monitoring Metrics Publisher', 'Application Insights Component Contributor', 'Application Insights Snapshot Debugger', 'Monitoring Contributor']]]
+    """Array of role assignments to create."""
     samplingPercentage: int
     """Percentage of the data produced by the application being monitored that is being sampled for Application Insights telemetry."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class ComponentOutputs(TypedDict, total=False):
-    """Outputs for Component"""
+class InsightsComponentOutputs(TypedDict, total=False):
+    """Outputs for InsightsComponent"""
     applicationId: Output[Literal['string']]
     """The application ID of the application insights component."""
     connectionString: Output[Literal['string']]
@@ -126,31 +134,28 @@ class ComponentOutputs(TypedDict, total=False):
     """The resource ID of the application insights component."""
 
 
-class ComponentBicep(Module):
-    outputs: ComponentOutputs
+class InsightsComponentBicep(Module):
+    outputs: InsightsComponentOutputs
 
 
-def component(
+def insights_component(
         bicep: IO[str],
+        params: InsightsComponent,
         /,
         *,
-        params: Component,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/component',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ComponentBicep:
-    symbol = "component_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsComponentBicep:
+    symbol = "insights_component_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/component:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -163,7 +168,7 @@ def component(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ComponentBicep(symbol)
+    output = InsightsComponentBicep(symbol)
     output.outputs = {
             'applicationId': Output(symbol, 'applicationId', 'string'),
             'connectionString': Output(symbol, 'connectionString', 'string'),

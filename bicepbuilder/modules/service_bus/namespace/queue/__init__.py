@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -73,6 +66,8 @@ class Queue(TypedDict, total=False):
     """Queue/Topic name to forward the Dead Letter message."""
     forwardTo: str
     """Queue/Topic name to forward the messages."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     lockDuration: str
     """ISO 8601 timespan duration of a peek-lock; that is, the amount of time that the message is locked for other receivers. The maximum value for LockDuration is 5 minutes; the default value is 1 minute."""
     maxDeliveryCount: int
@@ -85,6 +80,8 @@ class Queue(TypedDict, total=False):
     """A value indicating if this queue requires duplicate detection."""
     requiresSession: bool
     """A value that indicates whether the queue supports the concept of sessions."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Service Bus Data Owner', 'Azure Service Bus Data Receiver', 'Azure Service Bus Data Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     status: Literal['Active', 'Creating', 'Deleting', 'Disabled', 'ReceiveDisabled', 'Renaming', 'Restoring', 'SendDisabled', 'Unknown']
     """Enumerates the possible values for the status of a messaging entity. - Active, Disabled, Restoring, SendDisabled, ReceiveDisabled, Creating, Deleting, Renaming, Unknown."""
 

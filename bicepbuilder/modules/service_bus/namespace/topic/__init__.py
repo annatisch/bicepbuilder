@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -49,12 +42,24 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
+class ClientAffineProperty(TypedDict, total=False):
+    """The properties that are associated with a subscription that is client-affine."""
+    clientId: Required[str]
+    """Indicates the Client ID of the application that created the client-affine subscription."""
+    isDurable: bool
+    """For client-affine subscriptions, this value indicates whether the subscription is durable or not."""
+    isShared: bool
+    """For client-affine subscriptions, this value indicates whether the subscription is shared or not."""
+
+
 class Subscription(TypedDict, total=False):
     """The subscriptions of the topic."""
     name: Required[str]
     """The name of the service bus namespace topic subscription."""
     autoDeleteOnIdle: str
     """ISO 8601 timespan idle interval after which the syubscription is automatically deleted. The minimum duration is 5 minutes."""
+    clientAffineProperties: 'ClientAffineProperty'
+    """The properties that are associated with a subscription that is client-affine."""
     deadLetteringOnFilterEvaluationExceptions: bool
     """A value that indicates whether a subscription has dead letter support when a message expires."""
     deadLetteringOnMessageExpiration: bool
@@ -81,16 +86,6 @@ class Subscription(TypedDict, total=False):
     """Enumerates the possible values for the status of a messaging entity. - Active, Disabled, Restoring, SendDisabled, ReceiveDisabled, Creating, Deleting, Renaming, Unknown."""
 
 
-class ClientAffineProperty(TypedDict, total=False):
-    """The properties that are associated with a subscription that is client-affine."""
-    clientId: Required[str]
-    """Indicates the Client ID of the application that created the client-affine subscription."""
-    isDurable: bool
-    """For client-affine subscriptions, this value indicates whether the subscription is durable or not."""
-    isShared: bool
-    """For client-affine subscriptions, this value indicates whether the subscription is shared or not."""
-
-
 class Topic(TypedDict, total=False):
     """"""
     name: Required[str]
@@ -109,14 +104,20 @@ class Topic(TypedDict, total=False):
     """A value that indicates whether Express Entities are enabled. An express topic holds a message in memory temporarily before writing it to persistent storage. This property is only used if the """
     enablePartitioning: bool
     """A value that indicates whether the topic is to be partitioned across multiple message brokers."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maxMessageSizeInKilobytes: int
     """Maximum size (in KB) of the message payload that can be accepted by the topic. This property is only used in Premium today and default is 1024. This property is only used if the """
     maxSizeInMegabytes: int
     """The maximum size of the topic in megabytes, which is the size of memory allocated for the topic. Default is 1024."""
     requiresDuplicateDetection: bool
     """A value indicating if this topic requires duplicate detection."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Service Bus Data Owner', 'Azure Service Bus Data Receiver', 'Azure Service Bus Data Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     status: Literal['Active', 'Creating', 'Deleting', 'Disabled', 'ReceiveDisabled', 'Renaming', 'Restoring', 'SendDisabled', 'Unknown']
     """Enumerates the possible values for the status of a messaging entity. - Active, Disabled, Restoring, SendDisabled, ReceiveDisabled, Creating, Deleting, Renaming, Unknown."""
+    subscriptions: List['Subscription']
+    """The subscriptions of the topic."""
     supportOrdering: bool
     """Value that indicates whether the topic supports ordering."""
 

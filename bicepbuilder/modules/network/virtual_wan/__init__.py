@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class VirtualWan(TypedDict, total=False):
+class NetworkVirtualWan(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Virtual WAN."""
@@ -60,14 +60,18 @@ class VirtualWan(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location where all resources will be created."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     type: Literal['Basic', 'Standard']
     """The type of the Virtual WAN."""
 
 
-class VirtualWanOutputs(TypedDict, total=False):
-    """Outputs for VirtualWan"""
+class NetworkVirtualWanOutputs(TypedDict, total=False):
+    """Outputs for NetworkVirtualWan"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -78,31 +82,28 @@ class VirtualWanOutputs(TypedDict, total=False):
     """The resource ID of the virtual WAN."""
 
 
-class VirtualWanBicep(Module):
-    outputs: VirtualWanOutputs
+class NetworkVirtualWanBicep(Module):
+    outputs: NetworkVirtualWanOutputs
 
 
-def virtual_wan(
+def network_virtual_wan(
         bicep: IO[str],
+        params: NetworkVirtualWan,
         /,
         *,
-        params: VirtualWan,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/virtual-wan',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VirtualWanBicep:
-    symbol = "virtual_wan_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkVirtualWanBicep:
+    symbol = "network_virtual_wan_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/virtual-wan:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -115,7 +116,7 @@ def virtual_wan(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VirtualWanBicep(symbol)
+    output = NetworkVirtualWanBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

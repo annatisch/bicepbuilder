@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -21,18 +21,20 @@ if TYPE_CHECKING:
     from .compute import Compute
 
 
-class FeatureStoreSetting(TypedDict, total=False):
-    """Settings for feature store type workspaces. Required if 'kind' is set to 'FeatureStore'."""
-    offlineStoreConnectionName: str
-    """The offline store connection name."""
-    onlineStoreConnectionName: str
-    """The online store connection name."""
-
-
 class ComputeRuntime(TypedDict, total=False):
     """Compute runtime config for feature store type workspace."""
     sparkRuntimeVersion: str
     """The spark runtime version."""
+
+
+class FeatureStoreSetting(TypedDict, total=False):
+    """Settings for feature store type workspaces. Required if 'kind' is set to 'FeatureStore'."""
+    computeRuntime: 'ComputeRuntime'
+    """Compute runtime config for feature store type workspace."""
+    offlineStoreConnectionName: str
+    """The offline store connection name."""
+    onlineStoreConnectionName: str
+    """The online store connection name."""
 
 
 class Connection(TypedDict, total=False):
@@ -49,16 +51,12 @@ class Connection(TypedDict, total=False):
     """The expiry time of the connection."""
     isSharedToAll: bool
     """Indicates whether the connection is shared to all users in the workspace."""
+    metadata: Dict[str, object]
+    """User metadata for the connection."""
     sharedUserList: List[object]
     """The shared user list of the connection."""
     value: str
     """Value details of the workspace connection."""
-
-
-class Metadata(TypedDict, total=False):
-    """User metadata for the connection."""
-    >Any_other_property<: Required[str]
-    """The metadata key-value pairs."""
 
 
 class CustomerManagedKey(TypedDict, total=False):
@@ -71,24 +69,6 @@ class CustomerManagedKey(TypedDict, total=False):
     """The version of the customer managed key to reference for encryption. If not provided, the deployment will use the latest version available at deployment time."""
     userAssignedIdentityResourceId: str
     """User assigned identity to use when fetching the customer managed key. Required if no system assigned identity is available for use."""
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -107,6 +87,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -129,40 +131,8 @@ class ManagedNetworkSetting(TypedDict, total=False):
     """Managed Network settings for a machine learning workspace."""
     isolationMode: Required[Literal['AllowInternetOutbound', 'AllowOnlyApprovedOutbound', 'Disabled']]
     """Isolation mode for the managed network of a machine learning workspace."""
-
-
-class OutboundRule(TypedDict, total=False):
+    outboundRules: Dict[str, object]
     """Outbound rules for the managed network of a machine learning workspace."""
-    >Any_other_property<: Required[Dict[str, object]]
-    """The outbound rule. The name of the rule is the object key."""
-
-
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the Private Endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the Private Endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the Private Endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the Private Endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
-    service: str
-    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/Resource Groups in this deployment."""
 
 
 class CustomDnsConfig(TypedDict, total=False):
@@ -171,12 +141,6 @@ class CustomDnsConfig(TypedDict, total=False):
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -189,6 +153,14 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -197,18 +169,20 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS Zone Group to configure for the Private Endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
-
-
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
     privateDnsZoneResourceId: Required[str]
     """The resource id of the private DNS zone."""
     name: str
     """The name of the private DNS Zone Group config."""
+
+
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -229,6 +203,44 @@ class RoleAssignment(TypedDict, total=False):
     """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
     principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
     """The principal type of the assigned principal ID."""
+
+
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the Private Endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the Private Endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the Private Endpoint. This will be used to map to the first-party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the Private Endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the Private Endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS Zone Group to configure for the Private Endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different Resource Group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    """Array of role assignments to create."""
+    service: str
+    """The subresource to deploy the Private Endpoint for. For example "vault" for a Key Vault Private Endpoint."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/Resource Groups in this deployment."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -267,7 +279,7 @@ class WorkspaceHubConfig(TypedDict, total=False):
     """The resource ID of the default resource group for projects created in the workspace hub."""
 
 
-class Workspace(TypedDict, total=False):
+class MachineLearningServicesWorkspace(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the machine learning workspace."""
@@ -279,6 +291,8 @@ class Workspace(TypedDict, total=False):
     """The resource ID of the associated Key Vault. Required if 'kind' is 'Default', 'FeatureStore' or 'Hub'."""
     associatedStorageAccountResourceId: str
     """The resource ID of the associated Storage Account. Required if 'kind' is 'Default', 'FeatureStore' or 'Hub'."""
+    featureStoreSettings: 'FeatureStoreSetting'
+    """Settings for feature store type workspaces. Required if 'kind' is set to 'FeatureStore'."""
     hubResourceId: str
     """The resource ID of the hub to associate with the workspace. Required if 'kind' is set to 'Project'."""
     primaryUserAssignedIdentity: str
@@ -287,8 +301,14 @@ class Workspace(TypedDict, total=False):
     """The resource ID of the associated Container Registry."""
     computes: List['Compute']
     """Computes to create respectively attach to the workspace."""
+    connections: List['Connection']
+    """Connections to create in the workspace."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
     description: str
     """The description of this workspace."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     discoveryUrl: str
     """URL for the discovery service to identify regional endpoints for machine learning experimentation services."""
     enableTelemetry: bool
@@ -301,8 +321,20 @@ class Workspace(TypedDict, total=False):
     """The type of Azure Machine Learning workspace to create."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. At least one identity type is required."""
+    managedNetworkSettings: 'ManagedNetworkSetting'
+    """Managed Network settings for a machine learning workspace."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
     publicNetworkAccess: Literal['Disabled', 'Enabled']
     """Whether or not public network access is allowed for this resource. For security reasons it should be disabled."""
+    roleAssignments: List[Union['RoleAssignment', Literal['AzureML Compute Operator', 'AzureML Data Scientist', 'AzureML Metrics Writer (preview)', 'AzureML Registry User', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    serverlessComputeSettings: 'ServerlessComputeSetting'
+    """Settings for serverless compute created in the workspace."""
     serviceManagedResourcesSettings: Dict[str, object]
     """The service managed resource settings."""
     sharedPrivateLinkResources: List[object]
@@ -311,10 +343,12 @@ class Workspace(TypedDict, total=False):
     """The authentication mode used by the workspace when connecting to the default storage account."""
     tags: Dict[str, object]
     """Resource tags."""
+    workspaceHubConfig: 'WorkspaceHubConfig'
+    """Configuration for workspace hub settings."""
 
 
-class WorkspaceOutputs(TypedDict, total=False):
-    """Outputs for Workspace"""
+class MachineLearningServicesWorkspaceOutputs(TypedDict, total=False):
+    """Outputs for MachineLearningServicesWorkspace"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -327,31 +361,28 @@ class WorkspaceOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class WorkspaceBicep(Module):
-    outputs: WorkspaceOutputs
+class MachineLearningServicesWorkspaceBicep(Module):
+    outputs: MachineLearningServicesWorkspaceOutputs
 
 
-def workspace(
+def machine_learning_services_workspace(
         bicep: IO[str],
+        params: MachineLearningServicesWorkspace,
         /,
         *,
-        params: Workspace,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.9.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'machine-learning-services/workspace',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> WorkspaceBicep:
-    symbol = "workspace_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> MachineLearningServicesWorkspaceBicep:
+    symbol = "machine_learning_services_workspace_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/machine-learning-services/workspace:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -364,7 +395,7 @@ def workspace(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = WorkspaceBicep(symbol)
+    output = MachineLearningServicesWorkspaceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

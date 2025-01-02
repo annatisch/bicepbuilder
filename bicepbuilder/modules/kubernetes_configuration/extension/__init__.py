@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,7 +18,7 @@ from ..expressions import (
 )
 
 
-class Extension(TypedDict, total=False):
+class KubernetesConfigurationExtension(TypedDict, total=False):
     """"""
     clusterName: Required[str]
     """The name of the AKS cluster that should be configured."""
@@ -46,8 +46,8 @@ class Extension(TypedDict, total=False):
     """Version of the extension for this extension, if it is "pinned" to a specific version."""
 
 
-class ExtensionOutputs(TypedDict, total=False):
-    """Outputs for Extension"""
+class KubernetesConfigurationExtensionOutputs(TypedDict, total=False):
+    """Outputs for KubernetesConfigurationExtension"""
     name: Output[Literal['string']]
     """The name of the extension."""
     resourceGroupName: Output[Literal['string']]
@@ -56,31 +56,28 @@ class ExtensionOutputs(TypedDict, total=False):
     """The resource ID of the extension."""
 
 
-class ExtensionBicep(Module):
-    outputs: ExtensionOutputs
+class KubernetesConfigurationExtensionBicep(Module):
+    outputs: KubernetesConfigurationExtensionOutputs
 
 
-def extension(
+def kubernetes_configuration_extension(
         bicep: IO[str],
+        params: KubernetesConfigurationExtension,
         /,
         *,
-        params: Extension,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'kubernetes-configuration/extension',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ExtensionBicep:
-    symbol = "extension_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> KubernetesConfigurationExtensionBicep:
+    symbol = "kubernetes_configuration_extension_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/kubernetes-configuration/extension:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -93,7 +90,7 @@ def extension(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ExtensionBicep(symbol)
+    output = KubernetesConfigurationExtensionBicep(symbol)
     output.outputs = {
             'name': Output(symbol, 'name', 'string'),
             'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),

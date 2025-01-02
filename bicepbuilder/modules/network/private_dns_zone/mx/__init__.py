@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,6 +39,8 @@ class Mx(TypedDict, total=False):
     """The metadata attached to the record set."""
     mxRecords: List[object]
     """The list of MX records in the record set."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ttl: int
     """The TTL (time-to-live) of the records in the record set."""
 

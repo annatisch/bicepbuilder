@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -49,7 +49,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class EmailService(TypedDict, total=False):
+class CommunicationEmailService(TypedDict, total=False):
     """"""
     dataLocation: Required[str]
     """The location where the communication service stores its data at rest."""
@@ -61,12 +61,16 @@ class EmailService(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Endpoint tags."""
 
 
-class EmailServiceOutputs(TypedDict, total=False):
-    """Outputs for EmailService"""
+class CommunicationEmailServiceOutputs(TypedDict, total=False):
+    """Outputs for CommunicationEmailService"""
     domainNamess: Output[Literal['array']]
     """The list of the email domain names."""
     domainResourceIds: Output[Literal['array']]
@@ -81,31 +85,28 @@ class EmailServiceOutputs(TypedDict, total=False):
     """The resource ID of the email service."""
 
 
-class EmailServiceBicep(Module):
-    outputs: EmailServiceOutputs
+class CommunicationEmailServiceBicep(Module):
+    outputs: CommunicationEmailServiceOutputs
 
 
-def email_service(
+def communication_email_service(
         bicep: IO[str],
+        params: CommunicationEmailService,
         /,
         *,
-        params: EmailService,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'communication/email-service',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> EmailServiceBicep:
-    symbol = "email_service_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> CommunicationEmailServiceBicep:
+    symbol = "communication_email_service_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/communication/email-service:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -118,7 +119,7 @@ def email_service(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = EmailServiceBicep(symbol)
+    output = CommunicationEmailServiceBicep(symbol)
     output.outputs = {
             'domainNamess': Output(symbol, 'domainNamess', 'array'),
             'domainResourceIds': Output(symbol, 'domainResourceIds', 'array'),

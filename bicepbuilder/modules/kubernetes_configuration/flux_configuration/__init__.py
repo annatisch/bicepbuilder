@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,7 +18,7 @@ from ..expressions import (
 )
 
 
-class FluxConfiguration(TypedDict, total=False):
+class KubernetesConfigurationFluxConfiguration(TypedDict, total=False):
     """"""
     clusterName: Required[str]
     """The name of the AKS cluster that should be configured."""
@@ -46,8 +46,8 @@ class FluxConfiguration(TypedDict, total=False):
     """Whether this configuration should suspend its reconciliation of its kustomizations and sources."""
 
 
-class FluxConfigurationOutputs(TypedDict, total=False):
-    """Outputs for FluxConfiguration"""
+class KubernetesConfigurationFluxConfigurationOutputs(TypedDict, total=False):
+    """Outputs for KubernetesConfigurationFluxConfiguration"""
     name: Output[Literal['string']]
     """The name of the flux configuration."""
     resourceGroupName: Output[Literal['string']]
@@ -56,31 +56,28 @@ class FluxConfigurationOutputs(TypedDict, total=False):
     """The resource ID of the flux configuration."""
 
 
-class FluxConfigurationBicep(Module):
-    outputs: FluxConfigurationOutputs
+class KubernetesConfigurationFluxConfigurationBicep(Module):
+    outputs: KubernetesConfigurationFluxConfigurationOutputs
 
 
-def flux_configuration(
+def kubernetes_configuration_flux_configuration(
         bicep: IO[str],
+        params: KubernetesConfigurationFluxConfiguration,
         /,
         *,
-        params: FluxConfiguration,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'kubernetes-configuration/flux-configuration',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> FluxConfigurationBicep:
-    symbol = "flux_configuration_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> KubernetesConfigurationFluxConfigurationBicep:
+    symbol = "kubernetes_configuration_flux_configuration_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/kubernetes-configuration/flux-configuration:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -93,7 +90,7 @@ def flux_configuration(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = FluxConfigurationBicep(symbol)
+    output = KubernetesConfigurationFluxConfigurationBicep(symbol)
     output.outputs = {
             'name': Output(symbol, 'name', 'string'),
             'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),

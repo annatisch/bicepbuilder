@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -30,7 +30,7 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class VpnGateway(TypedDict, total=False):
+class NetworkVpnGateway(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the VPN gateway."""
@@ -46,6 +46,8 @@ class VpnGateway(TypedDict, total=False):
     """Enable routing preference property for the public IP interface of the VPN gateway."""
     location: str
     """Location where all resources will be created."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     natRules: List['NatRule']
     """List of all the NAT Rules to associate with the gateway."""
     tags: Dict[str, object]
@@ -56,8 +58,8 @@ class VpnGateway(TypedDict, total=False):
     """The scale unit for this VPN gateway."""
 
 
-class VpnGatewayOutputs(TypedDict, total=False):
-    """Outputs for VpnGateway"""
+class NetworkVpnGatewayOutputs(TypedDict, total=False):
+    """Outputs for NetworkVpnGateway"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -68,31 +70,28 @@ class VpnGatewayOutputs(TypedDict, total=False):
     """The resource ID of the VPN gateway."""
 
 
-class VpnGatewayBicep(Module):
-    outputs: VpnGatewayOutputs
+class NetworkVpnGatewayBicep(Module):
+    outputs: NetworkVpnGatewayOutputs
 
 
-def vpn_gateway(
+def network_vpn_gateway(
         bicep: IO[str],
+        params: NetworkVpnGateway,
         /,
         *,
-        params: VpnGateway,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/vpn-gateway',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VpnGatewayBicep:
-    symbol = "vpn_gateway_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkVpnGatewayBicep:
+    symbol = "network_vpn_gateway_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/vpn-gateway:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -105,7 +104,7 @@ def vpn_gateway(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VpnGatewayBicep(symbol)
+    output = NetworkVpnGatewayBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

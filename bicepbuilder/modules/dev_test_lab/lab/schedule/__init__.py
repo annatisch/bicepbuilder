@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -58,6 +51,12 @@ class Schedule(TypedDict, total=False):
     """The name of the schedule."""
     taskType: Required[Literal['LabVmsShutdownTask', 'LabVmsStartupTask']]
     """The task type of the schedule (e.g. LabVmsShutdownTask, LabVmsStartupTask)."""
+    dailyRecurrence: 'DailyRecurrence'
+    """If the schedule will occur once each day of the week, specify the daily recurrence."""
+    hourlyRecurrence: 'HourlyRecurrence'
+    """If the schedule will occur multiple times a day, specify the hourly recurrence."""
+    notificationSettings: 'NotificationSetting'
+    """The notification settings for the schedule."""
     status: Literal['Disabled', 'Enabled']
     """The status of the schedule (i.e. Enabled, Disabled)."""
     tags: Dict[str, object]
@@ -66,6 +65,8 @@ class Schedule(TypedDict, total=False):
     """The resource ID to which the schedule belongs."""
     timeZoneId: str
     """The time zone ID (e.g. Pacific Standard time)."""
+    weeklyRecurrence: 'WeeklyRecurrence'
+    """If the schedule will occur only some days of the week, specify the weekly recurrence."""
 
 
 class ScheduleOutputs(TypedDict, total=False):

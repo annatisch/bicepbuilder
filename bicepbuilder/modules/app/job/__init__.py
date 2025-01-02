@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,18 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class Container(TypedDict, total=False):
-    """List of container definitions for the Container App."""
-    image: Required[str]
-    """The image of the container."""
-    name: Required[str]
-    """The name of the container."""
-    args: List[object]
-    """Container start command arguments."""
-    command: List[object]
-    """The command to run in the container."""
 
 
 class Env(TypedDict, total=False):
@@ -40,22 +28,12 @@ class Env(TypedDict, total=False):
     """The environment variable value. Required if """
 
 
-class Probe(TypedDict, total=False):
-    """The probes of the container."""
-    type: Required[Literal['Liveness', 'Readiness', 'Startup']]
-    """The type of probe."""
-    failureThreshold: int
-    """Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3."""
-    initialDelaySeconds: int
-    """Number of seconds after the container has started before liveness probes are initiated. Defaults to 0 seconds."""
-    periodSeconds: int
-    """How often (in seconds) to perform the probe. Defaults to 10 seconds."""
-    successThreshold: int
-    """Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1."""
-    terminationGracePeriodSeconds: int
-    """Duration in seconds the pod needs to terminate gracefully upon probe failure. This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate."""
-    timeoutSeconds: int
-    """Number of seconds after which the probe times out. Defaults to 1 second."""
+class HttpHeader(TypedDict, total=False):
+    """Custom headers to set in the request."""
+    name: Required[str]
+    """The header field name."""
+    value: Required[str]
+    """The header field value."""
 
 
 class HttpGet(TypedDict, total=False):
@@ -66,16 +44,10 @@ class HttpGet(TypedDict, total=False):
     """Name of the port to access on the container. If not specified, the containerPort is used."""
     host: str
     """Host name to connect to, defaults to the pod IP."""
+    httpHeaders: List['HttpHeader']
+    """Custom headers to set in the request."""
     scheme: Literal['HTTP', 'HTTPS']
     """Scheme to use for connecting to the host. Defaults to HTTP."""
-
-
-class HttpHeader(TypedDict, total=False):
-    """Custom headers to set in the request."""
-    name: Required[str]
-    """The header field name."""
-    value: Required[str]
-    """The header field value."""
 
 
 class TcpSocket(TypedDict, total=False):
@@ -84,6 +56,28 @@ class TcpSocket(TypedDict, total=False):
     """Host name to connect to, defaults to the pod IP."""
     port: Required[int]
     """Name of the port to access on the container. If not specified, the containerPort is used."""
+
+
+class Probe(TypedDict, total=False):
+    """The probes of the container."""
+    type: Required[Literal['Liveness', 'Readiness', 'Startup']]
+    """The type of probe."""
+    failureThreshold: int
+    """Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3."""
+    httpGet: 'HttpGet'
+    """HTTPGet specifies the http request to perform."""
+    initialDelaySeconds: int
+    """Number of seconds after the container has started before liveness probes are initiated. Defaults to 0 seconds."""
+    periodSeconds: int
+    """How often (in seconds) to perform the probe. Defaults to 10 seconds."""
+    successThreshold: int
+    """Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1."""
+    tcpSocket: 'TcpSocket'
+    """TCPSocket specifies an action involving a TCP port."""
+    terminationGracePeriodSeconds: int
+    """Duration in seconds the pod needs to terminate gracefully upon probe failure. This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate."""
+    timeoutSeconds: int
+    """Number of seconds after which the probe times out. Defaults to 1 second."""
 
 
 class Resource(TypedDict, total=False):
@@ -104,22 +98,32 @@ class VolumeMount(TypedDict, total=False):
     """Path within the volume from which the container's volume should be mounted."""
 
 
-class EventTriggerConfig(TypedDict, total=False):
-    """Configuration of an event driven job. Required if """
-    parallelism: int
-    """Number of parallel replicas of a job that can run at a given time. Defaults to 1."""
-    replicaCompletionCount: int
-    """Minimum number of successful replica completions before overall job completion. Must be equal or or less than the parallelism. Defaults to 1."""
+class Container(TypedDict, total=False):
+    """List of container definitions for the Container App."""
+    image: Required[str]
+    """The image of the container."""
+    name: Required[str]
+    """The name of the container."""
+    args: List[object]
+    """Container start command arguments."""
+    command: List[object]
+    """The command to run in the container."""
+    env: List['Env']
+    """The environment variables to set in the container."""
+    probes: List['Probe']
+    """The probes of the container."""
+    resources: 'Resource'
+    """The resources to allocate to the container."""
+    volumeMounts: List['VolumeMount']
+    """The volume mounts to attach to the container."""
 
 
-class Scale(TypedDict, total=False):
-    """Scaling configurations for event driven jobs."""
-    maxExecutions: int
-    """Maximum number of job executions that are created for a trigger, default 100."""
-    minExecutions: int
-    """Minimum number of job executions that are created for a trigger, default 0."""
-    pollingInterval: int
-    """Interval to check each event source in seconds. Defaults to 30s."""
+class Auth(TypedDict, total=False):
+    """Authentication secrets for the scale rule."""
+    secretRef: Required[str]
+    """Name of the secret from which to pull the auth params."""
+    triggerParameter: Required[str]
+    """Trigger Parameter that uses the secret."""
 
 
 class Rule(TypedDict, total=False):
@@ -130,14 +134,30 @@ class Rule(TypedDict, total=False):
     """The name of the scale rule."""
     type: Required[str]
     """The type of the rule."""
-
-
-class Auth(TypedDict, total=False):
+    auth: List['Auth']
     """Authentication secrets for the scale rule."""
-    secretRef: Required[str]
-    """Name of the secret from which to pull the auth params."""
-    triggerParameter: Required[str]
-    """Trigger Parameter that uses the secret."""
+
+
+class Scale(TypedDict, total=False):
+    """Scaling configurations for event driven jobs."""
+    rules: Required[List['Rule']]
+    """Scaling rules for the job."""
+    maxExecutions: int
+    """Maximum number of job executions that are created for a trigger, default 100."""
+    minExecutions: int
+    """Minimum number of job executions that are created for a trigger, default 0."""
+    pollingInterval: int
+    """Interval to check each event source in seconds. Defaults to 30s."""
+
+
+class EventTriggerConfig(TypedDict, total=False):
+    """Configuration of an event driven job. Required if """
+    scale: Required['Scale']
+    """Scaling configurations for event driven jobs."""
+    parallelism: int
+    """Number of parallel replicas of a job that can run at a given time. Defaults to 1."""
+    replicaCompletionCount: int
+    """Minimum number of successful replica completions before overall job completion. Must be equal or or less than the parallelism. Defaults to 1."""
 
 
 class ManualTriggerConfig(TypedDict, total=False):
@@ -156,18 +176,6 @@ class ScheduleTriggerConfig(TypedDict, total=False):
     """Number of parallel replicas of a job that can run at a given time. Defaults to 1."""
     replicaCompletionCount: int
     """Number of successful completions of a job that are necessary to consider the job complete. Must be equal or or less than the parallelism. Defaults to 1."""
-
-
-class InitContainer(TypedDict, total=False):
-    """List of specialized containers that run before app containers."""
-    args: Required[List[object]]
-    """Container start command arguments."""
-    command: Required[List[object]]
-    """Container start command."""
-    image: Required[str]
-    """The image of the container."""
-    name: Required[str]
-    """The name of the container."""
 
 
 class Env(TypedDict, total=False):
@@ -196,6 +204,24 @@ class VolumeMount(TypedDict, total=False):
     """This must match the Name of a Volume."""
     subPath: str
     """Path within the volume from which the container's volume should be mounted."""
+
+
+class InitContainer(TypedDict, total=False):
+    """List of specialized containers that run before app containers."""
+    args: Required[List[object]]
+    """Container start command arguments."""
+    command: Required[List[object]]
+    """Container start command."""
+    image: Required[str]
+    """The image of the container."""
+    name: Required[str]
+    """The name of the container."""
+    env: List['Env']
+    """The environment variables to set in the container."""
+    resources: 'Resource'
+    """Container resource requirements."""
+    volumeMounts: List['VolumeMount']
+    """The volume mounts to attach to the container."""
 
 
 class Lock(TypedDict, total=False):
@@ -258,6 +284,14 @@ class Secret(TypedDict, total=False):
     """The name of the secret."""
 
 
+class Secret(TypedDict, total=False):
+    """List of secrets to be added in volume. If no secrets are provided, all secrets in collection will be added to volume."""
+    path: Required[str]
+    """Path to project secret to. If no path is provided, path defaults to name of secret listed in secretRef."""
+    secretRef: Required[str]
+    """Name of the Container App secret from which to pull the secret value."""
+
+
 class Volume(TypedDict, total=False):
     """List of volume definitions for the Container App."""
     name: Required[str]
@@ -268,40 +302,56 @@ class Volume(TypedDict, total=False):
     """Mount options used while mounting the Azure file share or NFS Azure file share. Must be a comma-separated string. Required if """
     storageName: str
     """The storage account name. Not needed for EmptyDir and Secret. Required if """
-
-
-class Secret(TypedDict, total=False):
+    secrets: List['Secret']
     """List of secrets to be added in volume. If no secrets are provided, all secrets in collection will be added to volume."""
-    path: Required[str]
-    """Path to project secret to. If no path is provided, path defaults to name of secret listed in secretRef."""
-    secretRef: Required[str]
-    """Name of the Container App secret from which to pull the secret value."""
 
 
-class Job(TypedDict, total=False):
+class AppJob(TypedDict, total=False):
     """"""
+    containers: Required[List['Container']]
+    """List of container definitions for the Container App."""
     environmentResourceId: Required[str]
     """Resource ID of Container Apps Environment."""
     name: Required[str]
     """Name of the Container App."""
     triggerType: Required[Literal['Event', 'Manual', 'Schedule']]
     """Trigger type of the job."""
+    eventTriggerConfig: 'EventTriggerConfig'
+    """Configuration of an event driven job. Required if """
+    manualTriggerConfig: 'ManualTriggerConfig'
+    """Configuration of a manually triggered job. Required if """
+    scheduleTriggerConfig: 'ScheduleTriggerConfig'
+    """Configuration of a schedule based job. Required if """
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    initContainers: List['InitContainer']
+    """List of specialized containers that run before app containers."""
     location: str
     """Location for all Resources. Defaults to the location of the Resource Group."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
+    registries: List['Registry']
+    """Collection of private container registry credentials for containers used by the Container app."""
     replicaRetryLimit: int
     """The maximum number of times a replica can be retried."""
     replicaTimeout: int
     """Maximum number of seconds a replica is allowed to run."""
+    roleAssignments: List[Union['RoleAssignment', Literal['ContainerApp Reader', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    secrets: List['Secret']
+    """The secrets of the Container App."""
     tags: Dict[str, object]
     """Tags of the resource."""
+    volumes: List['Volume']
+    """List of volume definitions for the Container App."""
     workloadProfileName: str
     """The name of the workload profile to use. Leave empty to use a consumption based profile."""
 
 
-class JobOutputs(TypedDict, total=False):
-    """Outputs for Job"""
+class AppJobOutputs(TypedDict, total=False):
+    """Outputs for AppJob"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -314,31 +364,28 @@ class JobOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class JobBicep(Module):
-    outputs: JobOutputs
+class AppJobBicep(Module):
+    outputs: AppJobOutputs
 
 
-def job(
+def app_job(
         bicep: IO[str],
+        params: AppJob,
         /,
         *,
-        params: Job,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'app/job',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> JobBicep:
-    symbol = "job_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> AppJobBicep:
+    symbol = "app_job_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/app/job:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -351,7 +398,7 @@ def job(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = JobBicep(symbol)
+    output = AppJobBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

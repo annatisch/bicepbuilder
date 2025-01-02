@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -28,6 +21,8 @@ class PrivateDnsZoneConfig(TypedDict, total=False):
 
 class PrivateDnsZoneGroup(TypedDict, total=False):
     """"""
+    privateDnsZoneConfigs: Required[List['PrivateDnsZoneConfig']]
+    """Array of private DNS zone configurations of the private DNS zone group. A DNS zone group can support up to 5 DNS zones."""
     name: str
     """The name of the private DNS zone group."""
 

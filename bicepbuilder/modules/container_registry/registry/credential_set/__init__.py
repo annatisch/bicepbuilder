@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -36,8 +29,12 @@ class ManagedIdentity(TypedDict, total=False):
 
 class CredentialSet(TypedDict, total=False):
     """"""
+    authCredentials: Required[List['AuthCredential']]
+    """List of authentication credentials stored for an upstream. Usually consists of a primary and an optional secondary credential."""
     loginServer: Required[str]
     """The credentials are stored for this upstream or login server."""
+    managedIdentities: Required['ManagedIdentity']
+    """The managed identity definition for this resource."""
     name: Required[str]
     """The name of the credential set."""
 

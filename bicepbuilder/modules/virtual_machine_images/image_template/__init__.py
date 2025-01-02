@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -52,14 +52,6 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ValidationProce(TypedDict, total=False):
-    """Configuration options and list of validations to be performed on the resulting image."""
-    continueDistributeOnFailure: bool
-    """If validation fails and this field is set to false, output image(s) will not be distributed. This is the default behavior. If validation fails and this field is set to true, output image(s) will still be distributed. Please use this option with caution as it may result in bad images being distributed for use. In either case (true or false), the end to end image run will be reported as having failed in case of a validation failure. [Note: This field has no effect if validation succeeds.]."""
-    sourceValidationOnly: bool
-    """If this field is set to true, the image specified in the 'source' section will directly be validated. No separate build will be run to generate and then validate a customized image. Not supported when performing customizations, validations or distributions on the image."""
-
-
 class InVMValidation(TypedDict, total=False):
     """A list of validators that will be performed on the image. Azure Image Builder supports File, PowerShell and Shell validators."""
     type: Required[Literal['File', 'PowerShell', 'Shell']]
@@ -84,12 +76,24 @@ class InVMValidation(TypedDict, total=False):
     """Valid codes that can be returned from the script/inline command, this avoids reported failure of the script/inline command."""
 
 
-class ImageTemplate(TypedDict, total=False):
+class ValidationProce(TypedDict, total=False):
+    """Configuration options and list of validations to be performed on the resulting image."""
+    continueDistributeOnFailure: bool
+    """If validation fails and this field is set to false, output image(s) will not be distributed. This is the default behavior. If validation fails and this field is set to true, output image(s) will still be distributed. Please use this option with caution as it may result in bad images being distributed for use. In either case (true or false), the end to end image run will be reported as having failed in case of a validation failure. [Note: This field has no effect if validation succeeds.]."""
+    inVMValidations: List['InVMValidation']
+    """A list of validators that will be performed on the image. Azure Image Builder supports File, PowerShell and Shell validators."""
+    sourceValidationOnly: bool
+    """If this field is set to true, the image specified in the 'source' section will directly be validated. No separate build will be run to generate and then validate a customized image. Not supported when performing customizations, validations or distributions on the image."""
+
+
+class VirtualMachineImageTemplate(TypedDict, total=False):
     """"""
     distributions: Required[List[object]]
     """The distribution targets where the image output needs to go to."""
     imageSource: Required[Dict[str, object]]
     """Image source definition in object format."""
+    managedIdentities: Required['ManagedIdentity']
+    """The managed identity definition for this resource."""
     name: Required[str]
     """The name prefix of the Image Template to be built by the Azure Image Builder service."""
     buildTimeoutInMinutes: int
@@ -100,16 +104,22 @@ class ImageTemplate(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     optimizeVmBoot: Literal['Disabled', 'Enabled']
     """The optimize property can be enabled while creating a VM image and allows VM optimization to improve image creation time."""
     osDiskSizeGB: int
     """Specifies the size of OS disk."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     stagingResourceGroupResourceId: str
     """Resource ID of the staging resource group in the same subscription and location as the image template that will be used to build the image."""
     subnetResourceId: str
     """Resource ID of an already existing subnet, e.g.: /subscriptions/"""
     tags: Dict[str, object]
     """Tags of the resource."""
+    validationProcess: 'ValidationProce'
+    """Configuration options and list of validations to be performed on the resulting image."""
     vmSize: str
     """Specifies the size for the VM."""
     vmUserAssignedIdentities: List[object]
@@ -118,8 +128,8 @@ class ImageTemplate(TypedDict, total=False):
     """Do not provide a value! This date is used to generate a unique image template name."""
 
 
-class ImageTemplateOutputs(TypedDict, total=False):
-    """Outputs for ImageTemplate"""
+class VirtualMachineImageTemplateOutputs(TypedDict, total=False):
+    """Outputs for VirtualMachineImageTemplate"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -134,31 +144,28 @@ class ImageTemplateOutputs(TypedDict, total=False):
     """The command to run in order to trigger the image build."""
 
 
-class ImageTemplateBicep(Module):
-    outputs: ImageTemplateOutputs
+class VirtualMachineImageTemplateBicep(Module):
+    outputs: VirtualMachineImageTemplateOutputs
 
 
-def image_template(
+def virtual_machine_image_template(
         bicep: IO[str],
+        params: VirtualMachineImageTemplate,
         /,
         *,
-        params: ImageTemplate,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'virtual-machine-images/image-template',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ImageTemplateBicep:
-    symbol = "image_template_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> VirtualMachineImageTemplateBicep:
+    symbol = "virtual_machine_image_template_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/virtual-machine-images/image-template:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -171,7 +178,7 @@ def image_template(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ImageTemplateBicep(symbol)
+    output = VirtualMachineImageTemplateBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

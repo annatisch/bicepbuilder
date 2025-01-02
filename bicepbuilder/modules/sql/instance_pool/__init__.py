@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,7 +18,7 @@ from ..expressions import (
 )
 
 
-class InstancePool(TypedDict, total=False):
+class SqlInstancePool(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the instance pool."""
@@ -42,8 +42,8 @@ class InstancePool(TypedDict, total=False):
     """The number of vCores for the instance pool."""
 
 
-class InstancePoolOutputs(TypedDict, total=False):
-    """Outputs for InstancePool"""
+class SqlInstancePoolOutputs(TypedDict, total=False):
+    """Outputs for SqlInstancePool"""
     instancePoolLocation: Output[Literal['string']]
     """The location of the SQL instance pool."""
     name: Output[Literal['string']]
@@ -54,31 +54,28 @@ class InstancePoolOutputs(TypedDict, total=False):
     """The ID of the SQL instance pool."""
 
 
-class InstancePoolBicep(Module):
-    outputs: InstancePoolOutputs
+class SqlInstancePoolBicep(Module):
+    outputs: SqlInstancePoolOutputs
 
 
-def instance_pool(
+def sql_instance_pool(
         bicep: IO[str],
+        params: SqlInstancePool,
         /,
         *,
-        params: InstancePool,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'sql/instance-pool',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> InstancePoolBicep:
-    symbol = "instance_pool_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> SqlInstancePoolBicep:
+    symbol = "sql_instance_pool_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/sql/instance-pool:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -91,7 +88,7 @@ def instance_pool(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = InstancePoolBicep(symbol)
+    output = SqlInstancePoolBicep(symbol)
     output.outputs = {
             'instancePoolLocation': Output(symbol, 'instancePoolLocation', 'string'),
             'name': Output(symbol, 'name', 'string'),

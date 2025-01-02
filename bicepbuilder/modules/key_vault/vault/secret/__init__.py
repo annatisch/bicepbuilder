@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -52,6 +45,8 @@ class Secret(TypedDict, total=False):
     """Not before date in seconds since 1970-01-01T00:00:00Z."""
     contentType: str
     """The content type of the secret."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Key Vault Administrator', 'Key Vault Contributor', 'Key Vault Reader', 'Key Vault Secrets Officer', 'Key Vault Secrets User', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""
 

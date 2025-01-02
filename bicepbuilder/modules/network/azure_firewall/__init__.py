@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,28 +18,26 @@ from ..expressions import (
 )
 
 
-class ApplicationRuleCollection(TypedDict, total=False):
-    """Collection of application rule collections used by Azure Firewall."""
-    name: Required[str]
-    """Name of the application rule collection."""
-
-
-class ApplicationRuleCollectionProperties(TypedDict, total=False):
-    """Properties of the azure firewall application rule collection."""
-    priority: Required[int]
-    """Priority of the application rule collection."""
-
-
 class Action(TypedDict, total=False):
     """The action type of a rule collection."""
     type: Required[Literal['Allow', 'Deny']]
     """The type of action."""
 
 
+class Protocol(TypedDict, total=False):
+    """Array of ApplicationRuleProtocols."""
+    protocolType: Required[Literal['Http', 'Https', 'Mssql']]
+    """Protocol type."""
+    port: int
+    """Port number for the protocol."""
+
+
 class Rule(TypedDict, total=False):
     """Collection of rules used by a application rule collection."""
     name: Required[str]
     """Name of the application rule."""
+    protocols: Required[List['Protocol']]
+    """Array of ApplicationRuleProtocols."""
     description: str
     """Description of the rule."""
     fqdnTags: List[object]
@@ -52,30 +50,22 @@ class Rule(TypedDict, total=False):
     """List of FQDNs for this rule."""
 
 
-class Protocol(TypedDict, total=False):
-    """Array of ApplicationRuleProtocols."""
-    protocolType: Required[Literal['Http', 'Https', 'Mssql']]
-    """Protocol type."""
-    port: int
-    """Port number for the protocol."""
+class ApplicationRuleCollectionProperties(TypedDict, total=False):
+    """Properties of the azure firewall application rule collection."""
+    action: Required['Action']
+    """The action type of a rule collection."""
+    priority: Required[int]
+    """Priority of the application rule collection."""
+    rules: Required[List['Rule']]
+    """Collection of rules used by a application rule collection."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+class ApplicationRuleCollection(TypedDict, total=False):
+    """Collection of application rule collections used by Azure Firewall."""
+    name: Required[str]
+    """Name of the application rule collection."""
+    properties: Required['ApplicationRuleCollectionProperties']
+    """Properties of the azure firewall application rule collection."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -96,24 +86,34 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class NatRuleCollection(TypedDict, total=False):
-    """Collection of NAT rule collections used by Azure Firewall."""
-    name: Required[str]
-    """Name of the NAT rule collection."""
-
-
-class NatRuleCollectionProperties(TypedDict, total=False):
-    """Properties of the azure firewall NAT rule collection."""
-    priority: Required[int]
-    """Priority of the NAT rule collection."""
 
 
 class Action(TypedDict, total=False):
@@ -146,16 +146,22 @@ class Rule(TypedDict, total=False):
     """The translated port for this NAT rule."""
 
 
-class NetworkRuleCollection(TypedDict, total=False):
-    """Collection of network rule collections used by Azure Firewall."""
-    name: Required[str]
-    """Name of the network rule collection."""
-
-
-class NetworkRuleCollectionProperties(TypedDict, total=False):
-    """Properties of the azure firewall network rule collection."""
+class NatRuleCollectionProperties(TypedDict, total=False):
+    """Properties of the azure firewall NAT rule collection."""
+    action: Required['Action']
+    """The action type of a NAT rule collection."""
     priority: Required[int]
-    """Priority of the network rule collection."""
+    """Priority of the NAT rule collection."""
+    rules: Required[List['Rule']]
+    """Collection of rules used by a NAT rule collection."""
+
+
+class NatRuleCollection(TypedDict, total=False):
+    """Collection of NAT rule collections used by Azure Firewall."""
+    name: Required[str]
+    """Name of the NAT rule collection."""
+    properties: Required['NatRuleCollectionProperties']
+    """Properties of the azure firewall NAT rule collection."""
 
 
 class Action(TypedDict, total=False):
@@ -186,6 +192,24 @@ class Rule(TypedDict, total=False):
     """List of source IpGroups for this rule."""
 
 
+class NetworkRuleCollectionProperties(TypedDict, total=False):
+    """Properties of the azure firewall network rule collection."""
+    action: Required['Action']
+    """The action type of a rule collection."""
+    priority: Required[int]
+    """Priority of the network rule collection."""
+    rules: Required[List['Rule']]
+    """Collection of rules used by a network rule collection."""
+
+
+class NetworkRuleCollection(TypedDict, total=False):
+    """Collection of network rule collections used by Azure Firewall."""
+    name: Required[str]
+    """Name of the network rule collection."""
+    properties: Required['NetworkRuleCollectionProperties']
+    """Properties of the azure firewall network rule collection."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -206,7 +230,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class AzureFirewall(TypedDict, total=False):
+class NetworkAzureFirewall(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Azure Firewall."""
@@ -218,8 +242,12 @@ class AzureFirewall(TypedDict, total=False):
     """Shared services Virtual Network resource ID. The virtual network ID containing AzureFirewallSubnet. If a Public IP is not provided, then the Public IP that is created as part of this module will be applied with the subnet provided in this variable. Required if """
     additionalPublicIpConfigurations: List[object]
     """This is to add any additional Public IP configurations on top of the Public IP with subnet IP configuration."""
+    applicationRuleCollections: List['ApplicationRuleCollection']
+    """Collection of application rule collections used by Azure Firewall."""
     azureSkuTier: Literal['Basic', 'Premium', 'Standard']
     """Tier of an Azure Firewall."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableForcedTunneling: bool
     """Enable/Disable forced tunneling."""
     enableTelemetry: bool
@@ -228,14 +256,22 @@ class AzureFirewall(TypedDict, total=False):
     """Resource ID of the Firewall Policy that should be attached."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     managementIPAddressObject: Dict[str, object]
     """Specifies the properties of the Management Public IP to create and be used by Azure Firewall. If it's not provided and managementIPResourceID is empty, a '-mip' suffix will be appended to the Firewall's name."""
     managementIPResourceID: str
     """The Management Public IP resource ID to associate to the AzureFirewallManagementSubnet. If empty, then the Management Public IP that is created as part of this module will be applied to the AzureFirewallManagementSubnet."""
+    natRuleCollections: List['NatRuleCollection']
+    """Collection of NAT rule collections used by Azure Firewall."""
+    networkRuleCollections: List['NetworkRuleCollection']
+    """Collection of network rule collections used by Azure Firewall."""
     publicIPAddressObject: Dict[str, object]
     """Specifies the properties of the Public IP to create and be used by the Firewall, if no existing public IP was provided."""
     publicIPResourceID: str
     """The Public IP resource ID to associate to the AzureFirewallSubnet. If empty, then the Public IP that is created as part of this module will be applied to the AzureFirewallSubnet."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the Azure Firewall resource."""
     threatIntelMode: Literal['Alert', 'Deny', 'Off']
@@ -244,8 +280,8 @@ class AzureFirewall(TypedDict, total=False):
     """Zone numbers e.g. 1,2,3."""
 
 
-class AzureFirewallOutputs(TypedDict, total=False):
-    """Outputs for AzureFirewall"""
+class NetworkAzureFirewallOutputs(TypedDict, total=False):
+    """Outputs for NetworkAzureFirewall"""
     applicationRuleCollections: Output[Literal['array']]
     """List of Application Rule Collections used by Azure Firewall."""
     ipConfAzureFirewallSubnet: Output[Literal['object']]
@@ -266,31 +302,28 @@ class AzureFirewallOutputs(TypedDict, total=False):
     """The resource ID of the Azure Firewall."""
 
 
-class AzureFirewallBicep(Module):
-    outputs: AzureFirewallOutputs
+class NetworkAzureFirewallBicep(Module):
+    outputs: NetworkAzureFirewallOutputs
 
 
-def azure_firewall(
+def network_azure_firewall(
         bicep: IO[str],
+        params: NetworkAzureFirewall,
         /,
         *,
-        params: AzureFirewall,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/azure-firewall',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> AzureFirewallBicep:
-    symbol = "azure_firewall_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkAzureFirewallBicep:
+    symbol = "network_azure_firewall_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/azure-firewall:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -303,7 +336,7 @@ def azure_firewall(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = AzureFirewallBicep(symbol)
+    output = NetworkAzureFirewallBicep(symbol)
     output.outputs = {
             'applicationRuleCollections': Output(symbol, 'applicationRuleCollections', 'array'),
             'ipConfAzureFirewallSubnet': Output(symbol, 'ipConfAzureFirewallSubnet', 'object'),

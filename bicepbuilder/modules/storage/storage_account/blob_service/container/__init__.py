@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -60,6 +53,8 @@ class Container(TypedDict, total=False):
     """A name-value pair to associate with the container as metadata."""
     publicAccess: Literal['Blob', 'Container', 'None']
     """Specifies whether data in the container may be accessed publicly and the level of access."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reader and Data Access', 'Role Based Access Control Administrator', 'Storage Account Backup Contributor', 'Storage Account Contributor', 'Storage Account Key Operator Service Role', 'Storage Blob Data Contributor', 'Storage Blob Data Owner', 'Storage Blob Data Reader', 'Storage Blob Delegator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class ContainerOutputs(TypedDict, total=False):

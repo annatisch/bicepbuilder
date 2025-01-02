@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,8 +18,18 @@ from ..expressions import (
 )
 
 
+class ManagedDisk(TypedDict, total=False):
+    """The managed disk parameters."""
+    diskEncryptionSetResourceId: str
+    """Specifies the customer managed disk encryption set resource id for the managed disk."""
+    storageAccountType: Literal['Premium_LRS', 'Premium_ZRS', 'PremiumV2_LRS', 'Standard_LRS', 'StandardSSD_LRS', 'StandardSSD_ZRS', 'UltraSSD_LRS']
+    """Specifies the storage account type for the managed disk."""
+
+
 class OsDisk(TypedDict, total=False):
     """Specifies the OS disk. For security reasons, it is recommended to specify DiskEncryptionSet into the osDisk object.  Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."""
+    managedDisk: Required['ManagedDisk']
+    """The managed disk parameters."""
     caching: Literal['None', 'ReadOnly', 'ReadWrite']
     """Specifies the caching requirements."""
     createOption: Literal['Attach', 'Empty', 'FromImage']
@@ -34,16 +44,20 @@ class OsDisk(TypedDict, total=False):
 
 class ManagedDisk(TypedDict, total=False):
     """The managed disk parameters."""
+    storageAccountType: Required[Literal['Premium_LRS', 'Premium_ZRS', 'PremiumV2_LRS', 'Standard_LRS', 'StandardSSD_LRS', 'StandardSSD_ZRS', 'UltraSSD_LRS']]
+    """Specifies the storage account type for the managed disk."""
     diskEncryptionSetResourceId: str
     """Specifies the customer managed disk encryption set resource id for the managed disk."""
-    storageAccountType: Literal['Premium_LRS', 'Premium_ZRS', 'PremiumV2_LRS', 'Standard_LRS', 'StandardSSD_LRS', 'StandardSSD_ZRS', 'UltraSSD_LRS']
-    """Specifies the storage account type for the managed disk."""
+    id: str
+    """Specifies the customer managed disk id for the managed disk."""
 
 
 class DataDisk(TypedDict, total=False):
     """Specifies the data disks. For security reasons, it is recommended to specify DiskEncryptionSet into the dataDisk object. Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."""
     diskSizeGB: Required[int]
     """Specifies the size of an empty data disk in gigabytes."""
+    managedDisk: Required['ManagedDisk']
+    """The managed disk parameters."""
     caching: Literal['None', 'ReadOnly', 'ReadWrite']
     """Specifies the caching requirements."""
     createOption: Literal['Attach', 'Empty', 'FromImage']
@@ -58,16 +72,6 @@ class DataDisk(TypedDict, total=False):
     """Specifies the logical unit number of the data disk."""
     name: str
     """The disk name."""
-
-
-class ManagedDisk(TypedDict, total=False):
-    """The managed disk parameters."""
-    storageAccountType: Required[Literal['Premium_LRS', 'Premium_ZRS', 'PremiumV2_LRS', 'Standard_LRS', 'StandardSSD_LRS', 'StandardSSD_ZRS', 'UltraSSD_LRS']]
-    """Specifies the storage account type for the managed disk."""
-    diskEncryptionSetResourceId: str
-    """Specifies the customer managed disk encryption set resource id for the managed disk."""
-    id: str
-    """Specifies the customer managed disk id for the managed disk."""
 
 
 class Lock(TypedDict, total=False):
@@ -106,7 +110,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class VirtualMachine(TypedDict, total=False):
+class ComputeVirtualMachine(TypedDict, total=False):
     """"""
     adminUsername: Required[str]
     """Administrator username."""
@@ -116,6 +120,8 @@ class VirtualMachine(TypedDict, total=False):
     """The name of the virtual machine to be created. You should use a unique prefix to reduce name collisions in Active Directory."""
     nicConfigurations: Required[List[object]]
     """Configures NICs and PIPs."""
+    osDisk: Required['OsDisk']
+    """Specifies the OS disk. For security reasons, it is recommended to specify DiskEncryptionSet into the osDisk object.  Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."""
     osType: Required[Literal['Linux', 'Windows']]
     """The chosen OS type."""
     vmSize: Required[str]
@@ -154,6 +160,8 @@ class VirtualMachine(TypedDict, total=False):
     """The configuration profile of automanage. Either '/providers/Microsoft.Automanage/bestPractices/AzureBestPracticesProduction', 'providers/Microsoft.Automanage/bestPractices/AzureBestPracticesDevTest' or the resource Id of custom profile."""
     customData: str
     """Custom data associated to the VM, this value will be automatically converted into base64 to account for the expected VM format."""
+    dataDisks: List['DataDisk']
+    """Specifies the data disks. For security reasons, it is recommended to specify DiskEncryptionSet into the dataDisk object. Restrictions: DiskEncryptionSet cannot be enabled if Azure Disk Encryption (guest-VM encryption using bitlocker/DM-Crypt) is enabled on your VMs."""
     dedicatedHostId: str
     """Specifies resource ID about the dedicated host that the virtual machine resides in."""
     disablePasswordAuthentication: bool
@@ -206,8 +214,12 @@ class VirtualMachine(TypedDict, total=False):
     """Specifies that the image or disk that is being used was licensed on-premises."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maintenanceConfigurationResourceId: str
     """The resource Id of a maintenance configuration for this VM."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. The system-assigned managed identity will automatically be enabled if extensionAadJoinConfig.enabled = "True"."""
     maxPriceForLowPriorityVm: str
     """Specifies the maximum price you are willing to pay for a low priority VM/VMSS. This price is in US Dollars."""
     patchAssessmentMode: Literal['AutomaticByPlatform', 'ImageDefault']
@@ -226,6 +238,8 @@ class VirtualMachine(TypedDict, total=False):
     """The list of SSH public keys used to authenticate with linux based VMs."""
     rebootSetting: Literal['Always', 'IfRequired', 'Never', 'Unknown']
     """Specifies the reboot setting for all AutomaticByPlatform patch installation operations."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Data Operator for Managed Disks', 'Desktop Virtualization Power On Contributor', 'Desktop Virtualization Power On Off Contributor', 'Desktop Virtualization Virtual Machine Contributor', 'DevTest Labs User', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Administrator Login', 'Virtual Machine Contributor', 'Virtual Machine User Login', 'VM Scanner Operator']]]
+    """Array of role assignments to create."""
     sasTokenValidityLength: str
     """SAS token validity length to use to download files from storage accounts. Usage: 'PT8H' - valid for 8 hours; 'P5D' - valid for 5 days; 'P1Y' - valid for 1 year. When not provided, the SAS token will be valid for 8 hours."""
     secureBootEnabled: bool
@@ -250,8 +264,8 @@ class VirtualMachine(TypedDict, total=False):
     """Do not provide a value! This date value is used to generate a registration token."""
 
 
-class VirtualMachineOutputs(TypedDict, total=False):
-    """Outputs for VirtualMachine"""
+class ComputeVirtualMachineOutputs(TypedDict, total=False):
+    """Outputs for ComputeVirtualMachine"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -264,31 +278,28 @@ class VirtualMachineOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class VirtualMachineBicep(Module):
-    outputs: VirtualMachineOutputs
+class ComputeVirtualMachineBicep(Module):
+    outputs: ComputeVirtualMachineOutputs
 
 
-def virtual_machine(
+def compute_virtual_machine(
         bicep: IO[str],
+        params: ComputeVirtualMachine,
         /,
         *,
-        params: VirtualMachine,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.10.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/virtual-machine',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VirtualMachineBicep:
-    symbol = "virtual_machine_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeVirtualMachineBicep:
+    symbol = "compute_virtual_machine_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/virtual-machine:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -301,7 +312,7 @@ def virtual_machine(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VirtualMachineBicep(symbol)
+    output = ComputeVirtualMachineBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

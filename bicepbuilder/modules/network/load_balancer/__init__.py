@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -20,24 +20,6 @@ from ..expressions import (
 if TYPE_CHECKING:
     from .backend_address_pool import BackendAddressPool
     from .inbound_nat_rule import InboundNatRule
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -56,6 +38,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -86,7 +90,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class LoadBalancer(TypedDict, total=False):
+class NetworkLoadBalancer(TypedDict, total=False):
     """"""
     frontendIPConfigurations: Required[List[object]]
     """Array of objects containing all frontend IP configurations."""
@@ -94,6 +98,8 @@ class LoadBalancer(TypedDict, total=False):
     """The Proximity Placement Groups Name."""
     backendAddressPools: List['BackendAddressPool']
     """Collection of backend address pools used by a load balancer."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     inboundNatRules: List['InboundNatRule']
@@ -102,18 +108,22 @@ class LoadBalancer(TypedDict, total=False):
     """Array of objects containing all load balancing rules."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     outboundRules: List[object]
     """The outbound rules."""
     probes: List[object]
     """Array of objects containing all probes, these are references in the load balancing rules."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     skuName: Literal['Basic', 'Standard']
     """Name of a load balancer SKU."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class LoadBalancerOutputs(TypedDict, total=False):
-    """Outputs for LoadBalancer"""
+class NetworkLoadBalancerOutputs(TypedDict, total=False):
+    """Outputs for NetworkLoadBalancer"""
     backendpools: Output[Literal['array']]
     """The backend address pools available in the load balancer."""
     location: Output[Literal['string']]
@@ -126,31 +136,28 @@ class LoadBalancerOutputs(TypedDict, total=False):
     """The resource ID of the load balancer."""
 
 
-class LoadBalancerBicep(Module):
-    outputs: LoadBalancerOutputs
+class NetworkLoadBalancerBicep(Module):
+    outputs: NetworkLoadBalancerOutputs
 
 
-def load_balancer(
+def network_load_balancer(
         bicep: IO[str],
+        params: NetworkLoadBalancer,
         /,
         *,
-        params: LoadBalancer,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/load-balancer',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> LoadBalancerBicep:
-    symbol = "load_balancer_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkLoadBalancerBicep:
+    symbol = "network_load_balancer_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/load-balancer:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -163,7 +170,7 @@ def load_balancer(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = LoadBalancerBicep(symbol)
+    output = NetworkLoadBalancerBicep(symbol)
     output.outputs = {
             'backendpools': Output(symbol, 'backendpools', 'array'),
             'location': Output(symbol, 'location', 'string'),

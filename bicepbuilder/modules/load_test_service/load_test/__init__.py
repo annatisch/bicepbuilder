@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -66,22 +66,30 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class LoadTest(TypedDict, total=False):
+class LoadTestServiceLoadTest(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Load test."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     loadTestDescription: str
     """The description of the load test."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""
 
 
-class LoadTestOutputs(TypedDict, total=False):
-    """Outputs for LoadTest"""
+class LoadTestServiceLoadTestOutputs(TypedDict, total=False):
+    """Outputs for LoadTestServiceLoadTest"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -94,31 +102,28 @@ class LoadTestOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class LoadTestBicep(Module):
-    outputs: LoadTestOutputs
+class LoadTestServiceLoadTestBicep(Module):
+    outputs: LoadTestServiceLoadTestOutputs
 
 
-def load_test(
+def load_test_service_load_test(
         bicep: IO[str],
+        params: LoadTestServiceLoadTest,
         /,
         *,
-        params: LoadTest,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'load-test-service/load-test',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> LoadTestBicep:
-    symbol = "load_test_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> LoadTestServiceLoadTestBicep:
+    symbol = "load_test_service_load_test_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/load-test-service/load-test:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -131,7 +136,7 @@ def load_test(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = LoadTestBicep(symbol)
+    output = LoadTestServiceLoadTestBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

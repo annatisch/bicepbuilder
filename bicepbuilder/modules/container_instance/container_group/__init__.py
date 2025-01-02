@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,34 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class Container(TypedDict, total=False):
-    """The containers and their respective config within the container group."""
-    name: Required[str]
-    """The name of the container instance."""
-
-
-class ContainerProperties(TypedDict, total=False):
-    """The properties of the container instance."""
-    image: Required[str]
-    """The name of the container source image."""
-    command: List[object]
-    """The command to execute within the container instance."""
-    livenessProbe: Dict[str, object]
-    """The liveness probe."""
-
-
-class Resource(TypedDict, total=False):
-    """The resource requirements of the container instance."""
-
-
-class Request(TypedDict, total=False):
-    """The resource requests of this container instance."""
-    cpu: Required[int]
-    """The CPU request of this container instance."""
-    memoryInGB: str
-    """The memory request in GB of this container instance."""
 
 
 class Gpu(TypedDict, total=False):
@@ -54,12 +26,14 @@ class Gpu(TypedDict, total=False):
     """The SKU of the GPU resource."""
 
 
-class Limit(TypedDict, total=False):
-    """The resource limits of this container instance."""
+class Request(TypedDict, total=False):
+    """The resource requests of this container instance."""
     cpu: Required[int]
-    """The CPU limit of this container instance."""
+    """The CPU request of this container instance."""
+    gpu: 'Gpu'
+    """The GPU request of this container instance."""
     memoryInGB: str
-    """The memory limit in GB of this container instance."""
+    """The memory request in GB of this container instance."""
 
 
 class Gpu(TypedDict, total=False):
@@ -70,10 +44,30 @@ class Gpu(TypedDict, total=False):
     """The SKU of the GPU resource."""
 
 
+class Limit(TypedDict, total=False):
+    """The resource limits of this container instance."""
+    cpu: Required[int]
+    """The CPU limit of this container instance."""
+    gpu: 'Gpu'
+    """The GPU limit of this container instance."""
+    memoryInGB: str
+    """The memory limit in GB of this container instance."""
+
+
+class Capability(TypedDict, total=False):
+    """The capabilities to add or drop for the container."""
+    add: List[object]
+    """The list of capabilities to add."""
+    drop: List[object]
+    """The list of capabilities to drop."""
+
+
 class SecurityContext(TypedDict, total=False):
     """The security context of the container instance."""
     allowPrivilegeEscalation: bool
     """Whether privilege escalation is allowed for the container."""
+    capabilities: 'Capability'
+    """The capabilities to add or drop for the container."""
     privileged: bool
     """Whether the container is run in privileged mode."""
     runAsGroup: int
@@ -84,12 +78,14 @@ class SecurityContext(TypedDict, total=False):
     """The seccomp profile to use for the container."""
 
 
-class Capability(TypedDict, total=False):
-    """The capabilities to add or drop for the container."""
-    add: List[object]
-    """The list of capabilities to add."""
-    drop: List[object]
-    """The list of capabilities to drop."""
+class Resource(TypedDict, total=False):
+    """The resource requirements of the container instance."""
+    requests: Required['Request']
+    """The resource requests of this container instance."""
+    limits: 'Limit'
+    """The resource limits of this container instance."""
+    securityContext: 'SecurityContext'
+    """The security context of the container instance."""
 
 
 class EnvironmentVariable(TypedDict, total=False):
@@ -118,6 +114,32 @@ class VolumeMount(TypedDict, total=False):
     """The name of the volume mount."""
     readOnly: bool
     """The flag indicating whether the volume mount is read-only."""
+
+
+class ContainerProperties(TypedDict, total=False):
+    """The properties of the container instance."""
+    image: Required[str]
+    """The name of the container source image."""
+    resources: Required['Resource']
+    """The resource requirements of the container instance."""
+    command: List[object]
+    """The command to execute within the container instance."""
+    environmentVariables: List['EnvironmentVariable']
+    """The environment variables to set in the container instance."""
+    livenessProbe: Dict[str, object]
+    """The liveness probe."""
+    ports: List['Port']
+    """The exposed ports on the container instance."""
+    volumeMounts: List['VolumeMount']
+    """The volume mounts within the container instance."""
+
+
+class Container(TypedDict, total=False):
+    """The containers and their respective config within the container group."""
+    name: Required[str]
+    """The name of the container instance."""
+    properties: Required['ContainerProperties']
+    """The properties of the container instance."""
 
 
 class IpAddressPort(TypedDict, total=False):
@@ -172,12 +194,18 @@ class ManagedIdentity(TypedDict, total=False):
     """The resource ID(s) to assign to the resource. Required if a user assigned identity is used for encryption."""
 
 
-class ContainerGroup(TypedDict, total=False):
+class ContainerInstanceContainerGroup(TypedDict, total=False):
     """"""
+    containers: Required[List['Container']]
+    """The containers and their respective config within the container group."""
     name: Required[str]
     """Name for the container group."""
+    ipAddressPorts: List['IpAddressPort']
+    """Ports to open on the public IP address. Must include all ports assigned on container level. Required if """
     autoGeneratedDomainNameLabelScope: Literal['Noreuse', 'ResourceGroupReuse', 'SubscriptionReuse', 'TenantReuse', 'Unsecure']
     """Specify level of protection of the domain name label."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
     dnsNameLabel: str
     """The Dns name label for the resource."""
     dnsNameServers: List[object]
@@ -186,12 +214,18 @@ class ContainerGroup(TypedDict, total=False):
     """DNS search domain which will be appended to each DNS lookup."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    imageRegistryCredentials: List['ImageRegistryCredential']
+    """The image registry credentials by which the container group is created from."""
     initContainers: List[object]
     """A list of container definitions which will be executed before the application container starts."""
     ipAddressType: Literal['Private', 'Public']
     """Specifies if the IP is exposed to the public internet or private VNET. - Public or Private."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     osType: str
     """The operating system type required by the containers in the container group. - Windows or Linux."""
     restartPolicy: Literal['Always', 'Never', 'OnFailure']
@@ -206,8 +240,8 @@ class ContainerGroup(TypedDict, total=False):
     """Specify if volumes (emptyDir, AzureFileShare or GitRepo) shall be attached to your containergroup."""
 
 
-class ContainerGroupOutputs(TypedDict, total=False):
-    """Outputs for ContainerGroup"""
+class ContainerInstanceContainerGroupOutputs(TypedDict, total=False):
+    """Outputs for ContainerInstanceContainerGroup"""
     iPv4Address: Output[Literal['string']]
     """The IPv4 address of the container group."""
     location: Output[Literal['string']]
@@ -222,31 +256,28 @@ class ContainerGroupOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ContainerGroupBicep(Module):
-    outputs: ContainerGroupOutputs
+class ContainerInstanceContainerGroupBicep(Module):
+    outputs: ContainerInstanceContainerGroupOutputs
 
 
-def container_group(
+def container_instance_container_group(
         bicep: IO[str],
+        params: ContainerInstanceContainerGroup,
         /,
         *,
-        params: ContainerGroup,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'container-instance/container-group',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ContainerGroupBicep:
-    symbol = "container_group_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ContainerInstanceContainerGroupBicep:
+    symbol = "container_instance_container_group_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/container-instance/container-group:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -259,7 +290,7 @@ def container_group(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ContainerGroupBicep(symbol)
+    output = ContainerInstanceContainerGroupBicep(symbol)
     output.outputs = {
             'iPv4Address': Output(symbol, 'iPv4Address', 'string'),
             'location': Output(symbol, 'location', 'string'),

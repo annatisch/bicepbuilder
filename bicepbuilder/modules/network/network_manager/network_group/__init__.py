@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -32,6 +25,8 @@ class NetworkGroup(TypedDict, total=False):
     """The name of the network group."""
     description: str
     """A description of the network group."""
+    staticMembers: List['StaticMember']
+    """Static Members to create for the network group. Contains virtual networks to add to the network group."""
 
 
 class NetworkGroupOutputs(TypedDict, total=False):

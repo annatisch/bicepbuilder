@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -19,24 +12,6 @@ from ...expressions import (
 
 if TYPE_CHECKING:
     from .basic_publishing_credentials_policy import BasicPublishingCredentialsPolicy
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -57,6 +32,28 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -73,46 +70,12 @@ class ManagedIdentity(TypedDict, total=False):
     """The resource ID(s) to assign to the resource."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the private endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the private endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the private endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the private endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    service: str
-    """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/resource groups in this deployment."""
-
-
 class CustomDnsConfig(TypedDict, total=False):
     """Custom DNS configurations."""
     ipAddresses: Required[List[object]]
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -125,6 +88,14 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -133,18 +104,20 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS zone group to configure for the private endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
-
-
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The private DNS zone groups to associate the private endpoint. A DNS zone group can support up to 5 DNS zones."""
     privateDnsZoneResourceId: Required[str]
     """The resource id of the private DNS zone."""
     name: str
     """The name of the private DNS zone group config."""
+
+
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS zone group to configure for the private endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS zone groups to associate the private endpoint. A DNS zone group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -165,6 +138,44 @@ class RoleAssignment(TypedDict, total=False):
     """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
     principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
     """The principal type of the assigned principal ID."""
+
+
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the private endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the private endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the private endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the private endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS zone group to configure for the private endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    """Array of role assignments to create."""
+    service: str
+    """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/resource groups in this deployment."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -219,6 +230,8 @@ class Slot(TypedDict, total=False):
     """Unique identifier that verifies the custom domains assigned to the app. Customer will add this ID to a txt record for verification."""
     dailyMemoryTimeQuota: int
     """Maximum allowed daily memory-time quota (applicable on dynamic apps only)."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enabled: bool
     """Setting this value to false disables the app (takes the app offline)."""
     enableTelemetry: bool
@@ -237,12 +250,20 @@ class Slot(TypedDict, total=False):
     """The resource ID of the assigned identity to be used to access a key vault with."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     msDeployConfiguration: Dict[str, object]
     """The extension MSDeployment configuration."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints."""
     publicNetworkAccess: Literal['Disabled', 'Enabled']
     """Allow or block all public traffic."""
     redundancyMode: Literal['ActiveActive', 'Failover', 'GeoRedundant', 'Manual', 'None']
     """Site redundancy mode."""
+    roleAssignments: List[Union['RoleAssignment', Literal['App Compliance Automation Administrator', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Web Plan Contributor', 'Website Contributor']]]
+    """Array of role assignments to create."""
     serverFarmResourceId: str
     """The resource ID of the app service plan to use for the slot."""
     siteConfig: Dict[str, object]

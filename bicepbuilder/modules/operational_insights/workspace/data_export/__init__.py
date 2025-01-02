@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,16 +11,18 @@ from ...expressions import (
 )
 
 
-class Destination(TypedDict, total=False):
-    """Destination properties."""
-    resourceId: Required[str]
-    """The destination resource ID."""
-
-
 class MetaData(TypedDict, total=False):
     """The destination metadata."""
     eventHubName: str
     """Allows to define an Event Hub name. Not applicable when destination is Storage Account."""
+
+
+class Destination(TypedDict, total=False):
+    """Destination properties."""
+    resourceId: Required[str]
+    """The destination resource ID."""
+    metaData: 'MetaData'
+    """The destination metadata."""
 
 
 class DataExport(TypedDict, total=False):
@@ -36,6 +31,8 @@ class DataExport(TypedDict, total=False):
     """The data export rule name."""
     tableNames: Required[List[object]]
     """An array of tables to export, for example: ['Heartbeat', 'SecurityEvent']."""
+    destination: 'Destination'
+    """Destination properties."""
     enable: bool
     """Active when enabled."""
 

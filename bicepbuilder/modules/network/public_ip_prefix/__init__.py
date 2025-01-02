@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -54,7 +54,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class PublicIpPrefix(TypedDict, total=False):
+class NetworkPublicIpPrefix(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the Public IP Prefix."""
@@ -64,10 +64,16 @@ class PublicIpPrefix(TypedDict, total=False):
     """The custom IP address prefix that this prefix is associated with. A custom IP address prefix is a contiguous range of IP addresses owned by an external customer and provisioned into a subscription. When a custom IP prefix is in Provisioned, Commissioning, or Commissioned state, a linked public IP prefix can be created. Either as a subset of the custom IP prefix range or the entire range."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    ipTags: List['IpTag']
+    """The list of tags associated with the public IP prefix."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     publicIPAddressVersion: Literal['IPv4', 'IPv6']
     """The public IP address version."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     tier: Literal['Global', 'Regional']
@@ -76,8 +82,8 @@ class PublicIpPrefix(TypedDict, total=False):
     """A list of availability zones denoting the IP allocated for the resource needs to come from. This is only applicable for regional public IP prefixes and must be empty for global public IP prefixes."""
 
 
-class PublicIpPrefixOutputs(TypedDict, total=False):
-    """Outputs for PublicIpPrefix"""
+class NetworkPublicIpPrefixOutputs(TypedDict, total=False):
+    """Outputs for NetworkPublicIpPrefix"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -88,31 +94,28 @@ class PublicIpPrefixOutputs(TypedDict, total=False):
     """The resource ID of the public IP prefix."""
 
 
-class PublicIpPrefixBicep(Module):
-    outputs: PublicIpPrefixOutputs
+class NetworkPublicIpPrefixBicep(Module):
+    outputs: NetworkPublicIpPrefixOutputs
 
 
-def public_ip_prefix(
+def network_public_ip_prefix(
         bicep: IO[str],
+        params: NetworkPublicIpPrefix,
         /,
         *,
-        params: PublicIpPrefix,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.6.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/public-ip-prefix',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PublicIpPrefixBicep:
-    symbol = "public_ip_prefix_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkPublicIpPrefixBicep:
+    symbol = "network_public_ip_prefix_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/public-ip-prefix:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -125,7 +128,7 @@ def public_ip_prefix(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PublicIpPrefixBicep(symbol)
+    output = NetworkPublicIpPrefixBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -57,10 +50,14 @@ class WcfRelay(TypedDict, total=False):
     """Type of WCF Relay."""
     authorizationRules: List['AuthorizationRule']
     """Authorization Rules for the WCF Relay."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     requiresClientAuthorization: bool
     """A value indicating if this relay requires client authorization."""
     requiresTransportSecurity: bool
     """A value indicating if this relay requires transport security."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Relay Listener', 'Azure Relay Owner', 'Azure Relay Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     userMetadata: str
     """User-defined string data for the WCF Relay."""
 

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -58,20 +58,26 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class UserAssignedIdentity(TypedDict, total=False):
+class ManagedIdentityUserAssignedIdentity(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the User Assigned Identity."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
+    federatedIdentityCredentials: List['FederatedIdentityCredential']
+    """The federated identity credentials list to indicate which token from the external IdP should be trusted by your application. Federated identity credentials are supported on applications only. A maximum of 20 federated identity credentials can be added per application object."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Managed Identity Contributor', 'Managed Identity Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class UserAssignedIdentityOutputs(TypedDict, total=False):
-    """Outputs for UserAssignedIdentity"""
+class ManagedIdentityUserAssignedIdentityOutputs(TypedDict, total=False):
+    """Outputs for ManagedIdentityUserAssignedIdentity"""
     clientId: Output[Literal['string']]
     """The client ID (application ID) of the user assigned identity."""
     location: Output[Literal['string']]
@@ -86,31 +92,28 @@ class UserAssignedIdentityOutputs(TypedDict, total=False):
     """The resource ID of the user assigned identity."""
 
 
-class UserAssignedIdentityBicep(Module):
-    outputs: UserAssignedIdentityOutputs
+class ManagedIdentityUserAssignedIdentityBicep(Module):
+    outputs: ManagedIdentityUserAssignedIdentityOutputs
 
 
-def user_assigned_identity(
+def managed_identity_user_assigned_identity(
         bicep: IO[str],
+        params: ManagedIdentityUserAssignedIdentity,
         /,
         *,
-        params: UserAssignedIdentity,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'managed-identity/user-assigned-identity',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> UserAssignedIdentityBicep:
-    symbol = "user_assigned_identity_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ManagedIdentityUserAssignedIdentityBicep:
+    symbol = "managed_identity_user_assigned_identity_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/managed-identity/user-assigned-identity:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -123,7 +126,7 @@ def user_assigned_identity(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = UserAssignedIdentityBicep(symbol)
+    output = ManagedIdentityUserAssignedIdentityBicep(symbol)
     output.outputs = {
             'clientId': Output(symbol, 'clientId', 'string'),
             'location': Output(symbol, 'location', 'string'),

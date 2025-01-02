@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -42,6 +35,8 @@ class Compute(TypedDict, total=False):
     """Opt-out of local authentication and ensure customers can use only MSI and AAD exclusively for authentication."""
     location: str
     """Specifies the location of the resource."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     properties: Dict[str, object]
     """The properties of the compute. Will be ignored in case "resourceId" is set."""
     resourceId: str

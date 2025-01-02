@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -55,6 +48,8 @@ class CapacityPool(TypedDict, total=False):
     """Location of the pool volume."""
     qosType: Literal['Auto', 'Manual']
     """The qos type of the pool."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     serviceLevel: Literal['Premium', 'Standard', 'StandardZRS', 'Ultra']
     """The pool service level."""
     tags: Dict[str, object]

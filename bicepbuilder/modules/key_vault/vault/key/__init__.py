@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -58,6 +51,8 @@ class Key(TypedDict, total=False):
     """The type of the key."""
     releasePolicy: Dict[str, object]
     """Key release policy."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Key Vault Administrator', 'Key Vault Contributor', 'Key Vault Crypto Officer', 'Key Vault Crypto Service Encryption User', 'Key Vault Crypto User', 'Key Vault Reader', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     rotationPolicy: Dict[str, object]
     """Key rotation policy properties object."""
     tags: Dict[str, object]

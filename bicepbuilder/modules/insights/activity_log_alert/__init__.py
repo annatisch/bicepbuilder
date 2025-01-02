@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -38,7 +38,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ActivityLogAlert(TypedDict, total=False):
+class InsightsActivityLogAlert(TypedDict, total=False):
     """"""
     conditions: Required[List[object]]
     """An Array of objects containing conditions that will cause this alert to activate. Conditions can also be combined with logical operators """
@@ -54,14 +54,16 @@ class ActivityLogAlert(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     scopes: List[object]
     """The list of resource IDs that this Activity Log Alert is scoped to."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class ActivityLogAlertOutputs(TypedDict, total=False):
-    """Outputs for ActivityLogAlert"""
+class InsightsActivityLogAlertOutputs(TypedDict, total=False):
+    """Outputs for InsightsActivityLogAlert"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -72,31 +74,28 @@ class ActivityLogAlertOutputs(TypedDict, total=False):
     """The resource ID of the activity log alert."""
 
 
-class ActivityLogAlertBicep(Module):
-    outputs: ActivityLogAlertOutputs
+class InsightsActivityLogAlertBicep(Module):
+    outputs: InsightsActivityLogAlertOutputs
 
 
-def activity_log_alert(
+def insights_activity_log_alert(
         bicep: IO[str],
+        params: InsightsActivityLogAlert,
         /,
         *,
-        params: ActivityLogAlert,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/activity-log-alert',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ActivityLogAlertBicep:
-    symbol = "activity_log_alert_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsActivityLogAlertBicep:
+    symbol = "insights_activity_log_alert_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/activity-log-alert:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -109,7 +108,7 @@ def activity_log_alert(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ActivityLogAlertBicep(symbol)
+    output = InsightsActivityLogAlertBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

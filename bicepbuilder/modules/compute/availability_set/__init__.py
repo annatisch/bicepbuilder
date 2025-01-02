@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class AvailabilitySet(TypedDict, total=False):
+class ComputeAvailabilitySet(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the availability set that is being created."""
@@ -54,20 +54,24 @@ class AvailabilitySet(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Resource location."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     platformFaultDomainCount: int
     """The number of fault domains to use."""
     platformUpdateDomainCount: int
     """The number of update domains to use."""
     proximityPlacementGroupResourceId: str
     """Resource ID of a proximity placement group."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator', 'Virtual Machine Administrator Login', 'Virtual Machine Contributor', 'Virtual Machine Data Access Administrator (preview)', 'Virtual Machine User Login']]]
+    """Array of role assignments to create."""
     skuName: str
     """SKU of the availability set."""
     tags: Dict[str, object]
     """Tags of the availability set resource."""
 
 
-class AvailabilitySetOutputs(TypedDict, total=False):
-    """Outputs for AvailabilitySet"""
+class ComputeAvailabilitySetOutputs(TypedDict, total=False):
+    """Outputs for ComputeAvailabilitySet"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -78,31 +82,28 @@ class AvailabilitySetOutputs(TypedDict, total=False):
     """The resource ID of the availability set."""
 
 
-class AvailabilitySetBicep(Module):
-    outputs: AvailabilitySetOutputs
+class ComputeAvailabilitySetBicep(Module):
+    outputs: ComputeAvailabilitySetOutputs
 
 
-def availability_set(
+def compute_availability_set(
         bicep: IO[str],
+        params: ComputeAvailabilitySet,
         /,
         *,
-        params: AvailabilitySet,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/availability-set',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> AvailabilitySetBicep:
-    symbol = "availability_set_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeAvailabilitySetBicep:
+    symbol = "compute_availability_set_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/availability-set:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -115,7 +116,7 @@ def availability_set(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = AvailabilitySetBicep(symbol)
+    output = ComputeAvailabilitySetBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ActionRule(TypedDict, total=False):
+class AlertsManagementActionRule(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the alert processing rule."""
@@ -62,6 +62,10 @@ class ActionRule(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     schedule: Dict[str, object]
     """Scheduling for alert processing rule."""
     scopes: List[object]
@@ -70,8 +74,8 @@ class ActionRule(TypedDict, total=False):
     """Resource tags."""
 
 
-class ActionRuleOutputs(TypedDict, total=False):
-    """Outputs for ActionRule"""
+class AlertsManagementActionRuleOutputs(TypedDict, total=False):
+    """Outputs for AlertsManagementActionRule"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -82,31 +86,28 @@ class ActionRuleOutputs(TypedDict, total=False):
     """The resource ID of the Alert Processing Rule."""
 
 
-class ActionRuleBicep(Module):
-    outputs: ActionRuleOutputs
+class AlertsManagementActionRuleBicep(Module):
+    outputs: AlertsManagementActionRuleOutputs
 
 
-def action_rule(
+def alerts_management_action_rule(
         bicep: IO[str],
+        params: AlertsManagementActionRule,
         /,
         *,
-        params: ActionRule,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'alerts-management/action-rule',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ActionRuleBicep:
-    symbol = "action_rule_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> AlertsManagementActionRuleBicep:
+    symbol = "alerts_management_action_rule_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/alerts-management/action-rule:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -119,7 +120,7 @@ def action_rule(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ActionRuleBicep(symbol)
+    output = AlertsManagementActionRuleBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

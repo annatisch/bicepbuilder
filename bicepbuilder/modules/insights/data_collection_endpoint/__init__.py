@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DataCollectionEndpoint(TypedDict, total=False):
+class InsightsDataCollectionEndpoint(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the data collection endpoint. The name is case insensitive."""
@@ -58,14 +58,18 @@ class DataCollectionEndpoint(TypedDict, total=False):
     """The kind of the resource."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     publicNetworkAccess: Literal['Disabled', 'Enabled', 'SecuredByPerimeter']
     """The configuration to set whether network access from public internet to the endpoints are allowed."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""
 
 
-class DataCollectionEndpointOutputs(TypedDict, total=False):
-    """Outputs for DataCollectionEndpoint"""
+class InsightsDataCollectionEndpointOutputs(TypedDict, total=False):
+    """Outputs for InsightsDataCollectionEndpoint"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -76,31 +80,28 @@ class DataCollectionEndpointOutputs(TypedDict, total=False):
     """The resource ID of the dataCollectionEndpoint."""
 
 
-class DataCollectionEndpointBicep(Module):
-    outputs: DataCollectionEndpointOutputs
+class InsightsDataCollectionEndpointBicep(Module):
+    outputs: InsightsDataCollectionEndpointOutputs
 
 
-def data_collection_endpoint(
+def insights_data_collection_endpoint(
         bicep: IO[str],
+        params: InsightsDataCollectionEndpoint,
         /,
         *,
-        params: DataCollectionEndpoint,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/data-collection-endpoint',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DataCollectionEndpointBicep:
-    symbol = "data_collection_endpoint_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsDataCollectionEndpointBicep:
+    symbol = "insights_data_collection_endpoint_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/data-collection-endpoint:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -113,7 +114,7 @@ def data_collection_endpoint(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DataCollectionEndpointBicep(symbol)
+    output = InsightsDataCollectionEndpointBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

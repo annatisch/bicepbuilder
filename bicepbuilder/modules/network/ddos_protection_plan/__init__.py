@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DdosProtectionPlan(TypedDict, total=False):
+class NetworkDdosProtectionPlan(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the DDoS protection plan to assign the VNET to."""
@@ -54,12 +54,16 @@ class DdosProtectionPlan(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
 
 
-class DdosProtectionPlanOutputs(TypedDict, total=False):
-    """Outputs for DdosProtectionPlan"""
+class NetworkDdosProtectionPlanOutputs(TypedDict, total=False):
+    """Outputs for NetworkDdosProtectionPlan"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -70,31 +74,28 @@ class DdosProtectionPlanOutputs(TypedDict, total=False):
     """The resource ID of the DDOS protection plan."""
 
 
-class DdosProtectionPlanBicep(Module):
-    outputs: DdosProtectionPlanOutputs
+class NetworkDdosProtectionPlanBicep(Module):
+    outputs: NetworkDdosProtectionPlanOutputs
 
 
-def ddos_protection_plan(
+def network_ddos_protection_plan(
         bicep: IO[str],
+        params: NetworkDdosProtectionPlan,
         /,
         *,
-        params: DdosProtectionPlan,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/ddos-protection-plan',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DdosProtectionPlanBicep:
-    symbol = "ddos_protection_plan_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkDdosProtectionPlanBicep:
+    symbol = "network_ddos_protection_plan_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/ddos-protection-plan:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -107,7 +108,7 @@ def ddos_protection_plan(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DdosProtectionPlanBicep(symbol)
+    output = NetworkDdosProtectionPlanBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

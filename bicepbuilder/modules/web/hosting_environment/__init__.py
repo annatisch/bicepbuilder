@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,6 +16,14 @@ from ..expressions import (
     Deployment,
     Output,
 )
+
+
+class LogCategoriesAndGroup(TypedDict, total=False):
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
+    category: str
+    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
+    categoryGroup: str
+    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to 'AllLogs' to collect all logs."""
 
 
 class DiagnosticSetting(TypedDict, total=False):
@@ -26,6 +34,8 @@ class DiagnosticSetting(TypedDict, total=False):
     """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
     """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
     marketplacePartnerResourceId: str
     """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
     name: str
@@ -34,14 +44,6 @@ class DiagnosticSetting(TypedDict, total=False):
     """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     workspaceResourceId: str
     """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
-class LogCategoriesAndGroup(TypedDict, total=False):
-    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
-    category: str
-    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
-    categoryGroup: str
-    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to 'AllLogs' to collect all logs."""
 
 
 class Lock(TypedDict, total=False):
@@ -80,7 +82,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class HostingEnvironment(TypedDict, total=False):
+class WebHostingEnvironment(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the resource to create."""
@@ -96,6 +98,8 @@ class HostingEnvironment(TypedDict, total=False):
     """The user-assigned identity to use for resolving the key vault certificate reference. If not specified, the system-assigned ASE identity will be used if available. Required if customDnsSuffix is not empty."""
     dedicatedHostCount: int
     """The Dedicated Host Count. If """
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     dnsSuffix: str
     """DNS suffix of the App Service Environment."""
     enableTelemetry: bool
@@ -108,8 +112,14 @@ class HostingEnvironment(TypedDict, total=False):
     """Kind of resource."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     networkConfiguration: Dict[str, object]
     """Properties to configure additional networking features."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator (Preview)', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     upgradePreference: Literal['Early', 'Late', 'Manual', 'None']
@@ -118,8 +128,8 @@ class HostingEnvironment(TypedDict, total=False):
     """Switch to make the App Service Environment zone redundant. If enabled, the minimum App Service plan instance count will be three, otherwise 1. If enabled, the """
 
 
-class HostingEnvironmentOutputs(TypedDict, total=False):
-    """Outputs for HostingEnvironment"""
+class WebHostingEnvironmentOutputs(TypedDict, total=False):
+    """Outputs for WebHostingEnvironment"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -132,31 +142,28 @@ class HostingEnvironmentOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class HostingEnvironmentBicep(Module):
-    outputs: HostingEnvironmentOutputs
+class WebHostingEnvironmentBicep(Module):
+    outputs: WebHostingEnvironmentOutputs
 
 
-def hosting_environment(
+def web_hosting_environment(
         bicep: IO[str],
+        params: WebHostingEnvironment,
         /,
         *,
-        params: HostingEnvironment,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'web/hosting-environment',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> HostingEnvironmentBicep:
-    symbol = "hosting_environment_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> WebHostingEnvironmentBicep:
+    symbol = "web_hosting_environment_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/web/hosting-environment:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -169,7 +176,7 @@ def hosting_environment(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = HostingEnvironmentBicep(symbol)
+    output = WebHostingEnvironmentBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class IpGroup(TypedDict, total=False):
+class NetworkIpGroup(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the IP Group."""
@@ -56,12 +56,16 @@ class IpGroup(TypedDict, total=False):
     """IpAddresses/IpAddressPrefixes in the IP Group resource."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'IPAM Pool Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Resource tags."""
 
 
-class IpGroupOutputs(TypedDict, total=False):
-    """Outputs for IpGroup"""
+class NetworkIpGroupOutputs(TypedDict, total=False):
+    """Outputs for NetworkIpGroup"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -72,31 +76,28 @@ class IpGroupOutputs(TypedDict, total=False):
     """The resource ID of the IP group."""
 
 
-class IpGroupBicep(Module):
-    outputs: IpGroupOutputs
+class NetworkIpGroupBicep(Module):
+    outputs: NetworkIpGroupOutputs
 
 
-def ip_group(
+def network_ip_group(
         bicep: IO[str],
+        params: NetworkIpGroup,
         /,
         *,
-        params: IpGroup,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.2.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/ip-group',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> IpGroupBicep:
-    symbol = "ip_group_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkIpGroupBicep:
+    symbol = "network_ip_group_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/ip-group:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -109,7 +110,7 @@ def ip_group(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = IpGroupBicep(symbol)
+    output = NetworkIpGroupBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

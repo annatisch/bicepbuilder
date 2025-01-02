@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -26,7 +26,7 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class Capacity(TypedDict, total=False):
+class FabricCapacity(TypedDict, total=False):
     """"""
     adminMembers: Required[List[object]]
     """List of admin members. Format: ["something@domain.com"]."""
@@ -36,6 +36,8 @@ class Capacity(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     skuName: Literal['F1024', 'F128', 'F16', 'F2', 'F2048', 'F256', 'F32', 'F4', 'F512', 'F64', 'F8']
     """SKU tier of the Fabric resource."""
     skuTier: Literal['Fabric']
@@ -44,8 +46,8 @@ class Capacity(TypedDict, total=False):
     """Tags of the resource."""
 
 
-class CapacityOutputs(TypedDict, total=False):
-    """Outputs for Capacity"""
+class FabricCapacityOutputs(TypedDict, total=False):
+    """Outputs for FabricCapacity"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -56,31 +58,28 @@ class CapacityOutputs(TypedDict, total=False):
     """The resource ID of the deployed Fabric resource."""
 
 
-class CapacityBicep(Module):
-    outputs: CapacityOutputs
+class FabricCapacityBicep(Module):
+    outputs: FabricCapacityOutputs
 
 
-def capacity(
+def fabric_capacity(
         bicep: IO[str],
+        params: FabricCapacity,
         /,
         *,
-        params: Capacity,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'fabric/capacity',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> CapacityBicep:
-    symbol = "capacity_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> FabricCapacityBicep:
+    symbol = "fabric_capacity_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/fabric/capacity:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -93,7 +92,7 @@ def capacity(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = CapacityBicep(symbol)
+    output = FabricCapacityBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

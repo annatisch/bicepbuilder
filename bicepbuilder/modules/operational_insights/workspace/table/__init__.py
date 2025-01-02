@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -48,16 +41,6 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Schema(TypedDict, total=False):
-    """Table's schema."""
-    name: Required[str]
-    """The table name."""
-    description: str
-    """The table description."""
-    displayName: str
-    """The table display name."""
-
-
 class Column(TypedDict, total=False):
     """A list of table custom columns."""
     name: Required[str]
@@ -70,6 +53,18 @@ class Column(TypedDict, total=False):
     """The column description."""
     displayName: str
     """Column display name."""
+
+
+class Schema(TypedDict, total=False):
+    """Table's schema."""
+    columns: Required[List['Column']]
+    """A list of table custom columns."""
+    name: Required[str]
+    """The table name."""
+    description: str
+    """The table description."""
+    displayName: str
+    """The table display name."""
 
 
 class SearchResult(TypedDict, total=False):
@@ -92,8 +87,16 @@ class Table(TypedDict, total=False):
     """The name of the table."""
     plan: Literal['Analytics', 'Basic']
     """Instruct the system how to handle and charge the logs ingested to this table."""
+    restoredLogs: 'RestoredLog'
+    """Restore parameters."""
     retentionInDays: int
     """The table retention in days, between 4 and 730. Setting this property to -1 will default to the workspace retention."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Log Analytics Contributor', 'Log Analytics Reader', 'Monitoring Contributor', 'Monitoring Reader', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    schema: 'Schema'
+    """Table's schema."""
+    searchResults: 'SearchResult'
+    """Parameters of the search job that initiated this table."""
     totalRetentionInDays: int
     """The table total retention in days, between 4 and 2555. Setting this property to -1 will default to table retention."""
 

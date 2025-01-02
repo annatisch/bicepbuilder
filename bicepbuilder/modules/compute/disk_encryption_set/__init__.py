@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -54,7 +54,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class DiskEncryptionSet(TypedDict, total=False):
+class ComputeDiskEncryptionSet(TypedDict, total=False):
     """"""
     keyName: Required[str]
     """Key URL (with version) pointing to a key or secret in KeyVault."""
@@ -72,14 +72,20 @@ class DiskEncryptionSet(TypedDict, total=False):
     """The version of the customer managed key to reference for encryption. If not provided, the latest key version is used."""
     location: str
     """Resource location."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. At least one identity type is required."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Data Operator for Managed Disks', 'Disk Backup Reader', 'Disk Pool Operator', 'Disk Restore Operator', 'Disk Snapshot Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     rotationToLatestKeyVersionEnabled: bool
     """Set this flag to true to enable auto-updating of this disk encryption set to the latest key version."""
     tags: Dict[str, object]
     """Tags of the disk encryption resource."""
 
 
-class DiskEncryptionSetOutputs(TypedDict, total=False):
-    """Outputs for DiskEncryptionSet"""
+class ComputeDiskEncryptionSetOutputs(TypedDict, total=False):
+    """Outputs for ComputeDiskEncryptionSet"""
     identities: Output[Literal['object']]
     """The idenities of the disk encryption set."""
     keyVaultName: Output[Literal['string']]
@@ -96,31 +102,28 @@ class DiskEncryptionSetOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class DiskEncryptionSetBicep(Module):
-    outputs: DiskEncryptionSetOutputs
+class ComputeDiskEncryptionSetBicep(Module):
+    outputs: ComputeDiskEncryptionSetOutputs
 
 
-def disk_encryption_set(
+def compute_disk_encryption_set(
         bicep: IO[str],
+        params: ComputeDiskEncryptionSet,
         /,
         *,
-        params: DiskEncryptionSet,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'compute/disk-encryption-set',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DiskEncryptionSetBicep:
-    symbol = "disk_encryption_set_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> ComputeDiskEncryptionSetBicep:
+    symbol = "compute_disk_encryption_set_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/compute/disk-encryption-set:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -133,7 +136,7 @@ def disk_encryption_set(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DiskEncryptionSetBicep(symbol)
+    output = ComputeDiskEncryptionSetBicep(symbol)
     output.outputs = {
             'identities': Output(symbol, 'identities', 'object'),
             'keyVaultName': Output(symbol, 'keyVaultName', 'string'),

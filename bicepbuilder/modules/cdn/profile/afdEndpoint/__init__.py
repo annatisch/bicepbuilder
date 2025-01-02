@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -18,12 +11,32 @@ from ...expressions import (
 )
 
 
+class CompressionSetting(TypedDict, total=False):
+    """Compression settings."""
+    contentTypesToCompress: Required[List[object]]
+    """List of content types on which compression applies. The value should be a valid MIME type."""
+    iscontentTypeToCompressAll: bool
+    """Indicates whether content compression is enabled on AzureFrontDoor. Default value is false. If compression is enabled, content will be served as compressed if user requests for a compressed version. Content won't be compressed on AzureFrontDoor when requested content is smaller than 1 byte or larger than 1 MB."""
+
+
+class CacheConfiguration(TypedDict, total=False):
+    """The caching configuration for this route. To disable caching, do not provide a cacheConfiguration object."""
+    compressionSettings: Required['CompressionSetting']
+    """Compression settings."""
+    queryParameters: Required[str]
+    """Query parameters to include or exclude (comma separated)."""
+    queryStringCachingBehavior: Required[Literal['IgnoreQueryString', 'IgnoreSpecifiedQueryStrings', 'IncludeSpecifiedQueryStrings', 'UseQueryString']]
+    """Defines how Frontdoor caches requests that include query strings."""
+
+
 class Route(TypedDict, total=False):
     """The list of routes for this AFD Endpoint."""
     name: Required[str]
     """The name of the route."""
     originGroupName: Required[str]
     """The name of the origin group."""
+    cacheConfiguration: 'CacheConfiguration'
+    """The caching configuration for this route. To disable caching, do not provide a cacheConfiguration object."""
     customDomainNames: List[object]
     """The names of the custom domains."""
     enabledState: Literal['Disabled', 'Enabled']
@@ -44,22 +57,6 @@ class Route(TypedDict, total=False):
     """The supported protocols of the rule."""
 
 
-class CacheConfiguration(TypedDict, total=False):
-    """The caching configuration for this route. To disable caching, do not provide a cacheConfiguration object."""
-    queryParameters: Required[str]
-    """Query parameters to include or exclude (comma separated)."""
-    queryStringCachingBehavior: Required[Literal['IgnoreQueryString', 'IgnoreSpecifiedQueryStrings', 'IncludeSpecifiedQueryStrings', 'UseQueryString']]
-    """Defines how Frontdoor caches requests that include query strings."""
-
-
-class CompressionSetting(TypedDict, total=False):
-    """Compression settings."""
-    contentTypesToCompress: Required[List[object]]
-    """List of content types on which compression applies. The value should be a valid MIME type."""
-    iscontentTypeToCompressAll: bool
-    """Indicates whether content compression is enabled on AzureFrontDoor. Default value is false. If compression is enabled, content will be served as compressed if user requests for a compressed version. Content won't be compressed on AzureFrontDoor when requested content is smaller than 1 byte or larger than 1 MB."""
-
-
 class Afdendpoint(TypedDict, total=False):
     """"""
     name: Required[str]
@@ -70,6 +67,8 @@ class Afdendpoint(TypedDict, total=False):
     """Indicates whether the AFD Endpoint is enabled. The default value is Enabled."""
     location: str
     """The location of the AFD Endpoint."""
+    routes: List['Route']
+    """The list of routes for this AFD Endpoint."""
     tags: Dict[str, object]
     """The tags of the AFD Endpoint."""
 

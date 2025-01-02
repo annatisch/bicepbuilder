@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -76,6 +69,8 @@ class Eventhub(TypedDict, total=False):
     """A value that indicates whether to Skip Empty Archives."""
     consumergroups: List['Consumergroup']
     """The consumer groups to create in this event hub instance."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     messageRetentionInDays: int
     """Number of days to retain the events for this Event Hub, value should be 1 to 7 days. Will be automatically set to infinite retention if cleanup policy is set to "Compact"."""
     partitionCount: int
@@ -86,6 +81,8 @@ class Eventhub(TypedDict, total=False):
     """Retention time in hours. Number of hours to retain the events for this Event Hub. This value is only used when cleanupPolicy is Delete. If cleanupPolicy is Compact the returned value of this property is Long.MaxValue."""
     retentionDescriptionTombstoneRetentionTimeInHours: int
     """Retention cleanup policy. Number of hours to retain the tombstone markers of a compacted Event Hub. This value is only used when cleanupPolicy is Compact. Consumer must complete reading the tombstone marker within this specified amount of time if consumer begins from starting offset to ensure they get a valid snapshot for the specific key described by the tombstone marker within the compacted Event Hub."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Event Hubs Data Owner', 'Azure Event Hubs Data Receiver', 'Azure Event Hubs Data Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     status: Literal['Active', 'Creating', 'Deleting', 'Disabled', 'ReceiveDisabled', 'Renaming', 'Restoring', 'SendDisabled', 'Unknown']
     """Enumerates the possible values for the status of the Event Hub."""
 

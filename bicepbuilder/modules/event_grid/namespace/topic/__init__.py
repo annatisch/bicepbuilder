@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -59,8 +52,12 @@ class Topic(TypedDict, total=False):
     """All event subscriptions to create."""
     inputSchema: str
     """This determines the format that is expected for incoming events published to the topic."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     publisherType: str
     """Publisher type of the namespace topic."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Resource Notifications System Topics Subscriber', 'Contributor', 'EventGrid Contributor', 'EventGrid Data Contributor', 'EventGrid Data Receiver', 'EventGrid Data Sender', 'EventGrid EventSubscription Contributor', 'EventGrid EventSubscription Reader', 'EventGrid TopicSpaces Publisher', 'EventGrid TopicSpaces Subscriber', 'Owner', 'Reader', 'User Access Administrator']]]
+    """Array of role assignments to create."""
 
 
 class TopicOutputs(TypedDict, total=False):

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -36,24 +36,6 @@ class CustomerManagedKey(TypedDict, total=False):
     """User assigned identity to use when fetching the customer managed key. Required if no system assigned identity is available for use."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -70,6 +52,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LanguageExtension(TypedDict, total=False):
@@ -110,46 +114,12 @@ class PrincipalAssignment(TypedDict, total=False):
     """The tenant id of the principal."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
-    service: Required[str]
-    """The subresource to deploy the private endpoint for. For example "blob", "table", "queue" or "file" for a Storage Account's Private Endpoints."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the private endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the private endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the private endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the private endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/resource groups in this deployment."""
-
-
 class CustomDnsConfig(TypedDict, total=False):
     """Custom DNS configurations."""
     ipAddresses: Required[List[object]]
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -162,6 +132,14 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -170,18 +148,20 @@ class Lock(TypedDict, total=False):
     """Specify the name of lock."""
 
 
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS zone group to configure for the private endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
-
-
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
     privateDnsZoneResourceId: Required[str]
     """The resource id of the private DNS zone."""
     name: str
     """The name of the private DNS Zone Group config."""
+
+
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS zone group to configure for the private endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS Zone Groups to associate the Private Endpoint. A DNS Zone Group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -202,6 +182,44 @@ class RoleAssignment(TypedDict, total=False):
     """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
     principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
     """The principal type of the assigned principal ID."""
+
+
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
+    service: Required[str]
+    """The subresource to deploy the private endpoint for. For example "blob", "table", "queue" or "file" for a Storage Account's Private Endpoints."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the private endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the private endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the private endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the private endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS zone group to configure for the private endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    """Array of role assignments to create."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/resource groups in this deployment."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -240,12 +258,14 @@ class VirtualNetworkConfiguration(TypedDict, total=False):
     """The resource ID of the subnet to which to deploy the Kusto Cluster."""
 
 
-class Cluster(TypedDict, total=False):
+class KustoCluster(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the Kusto cluster which must be unique within Azure."""
     sku: Required[str]
     """The SKU of the Kusto Cluster."""
+    acceptedAudiences: List['AcceptedAudience']
+    """The Kusto Cluster's accepted audiences."""
     allowedFqdnList: List[object]
     """List of allowed fully-qulified domain names (FQDNs) for egress from the Kusto Cluster."""
     allowedIpRangeList: List[object]
@@ -256,6 +276,10 @@ class Cluster(TypedDict, total=False):
     """When auto-scale is enabled, the minimum number of instances in the Kusto Cluster."""
     capacity: int
     """The number of instances of the Kusto Cluster."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableAutoScale: bool
     """Enable/disable auto-scale."""
     enableAutoStop: bool
@@ -278,20 +302,36 @@ class Cluster(TypedDict, total=False):
     """Enable/disable zone redundancy."""
     engineType: Literal['V2', 'V3']
     """The engine type of the Kusto Cluster."""
+    languageExtensions: List['LanguageExtension']
+    """List of the language extensions of the Kusto Cluster."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
+    principalAssignments: List['PrincipalAssignment']
+    """The Principal Assignments for the Kusto Cluster."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
     publicIPType: Literal['DualStack', 'IPv4', 'IPv6']
     """Indicates what public IP type to create - IPv4 (default), or DualStack (both IPv4 and IPv6)."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     tier: Literal['Basic', 'Standard']
     """The tier of the Kusto Cluster."""
+    trustedExternalTenants: List['TrustedExternalTenant']
+    """The external tenants trusted by the Kusto Cluster."""
     virtualClusterGraduationProperties: str
     """The virtual cluster graduation properties of the Kusto Cluster."""
+    virtualNetworkConfiguration: 'VirtualNetworkConfiguration'
+    """The virtual network configuration of the Kusto Cluster."""
 
 
-class ClusterOutputs(TypedDict, total=False):
-    """Outputs for Cluster"""
+class KustoClusterOutputs(TypedDict, total=False):
+    """Outputs for KustoCluster"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -306,31 +346,28 @@ class ClusterOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ClusterBicep(Module):
-    outputs: ClusterOutputs
+class KustoClusterBicep(Module):
+    outputs: KustoClusterOutputs
 
 
-def cluster(
+def kusto_cluster(
         bicep: IO[str],
+        params: KustoCluster,
         /,
         *,
-        params: Cluster,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.4.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'kusto/cluster',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ClusterBicep:
-    symbol = "cluster_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> KustoClusterBicep:
+    symbol = "kusto_cluster_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/kusto/cluster:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -343,7 +380,7 @@ def cluster(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ClusterBicep(symbol)
+    output = KustoClusterBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

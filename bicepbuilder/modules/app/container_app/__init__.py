@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,20 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class Container(TypedDict, total=False):
-    """List of container definitions for the Container App."""
-    image: Required[str]
-    """Container image tag."""
-    resources: Required[Dict[str, object]]
-    """Container resource requirements."""
-    args: List[object]
-    """Container start command arguments."""
-    command: List[object]
-    """Container start command."""
-    name: str
-    """Custom container name."""
 
 
 class Env(TypedDict, total=False):
@@ -42,22 +28,12 @@ class Env(TypedDict, total=False):
     """Non-secret environment variable value."""
 
 
-class Probe(TypedDict, total=False):
-    """List of probes for the container."""
-    failureThreshold: int
-    """Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3."""
-    initialDelaySeconds: int
-    """Number of seconds after the container has started before liveness probes are initiated."""
-    periodSeconds: int
-    """How often (in seconds) to perform the probe. Default to 10 seconds."""
-    successThreshold: int
-    """Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup."""
-    terminationGracePeriodSeconds: int
-    """Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate. Maximum value is 3600 seconds (1 hour)."""
-    timeoutSeconds: int
-    """Number of seconds after which the probe times out. Defaults to 1 second."""
-    type: Literal['Liveness', 'Readiness', 'Startup']
-    """The type of probe."""
+class HttpHeader(TypedDict, total=False):
+    """HTTP headers to set in the request."""
+    name: Required[str]
+    """Name of the header."""
+    value: Required[str]
+    """Value of the header."""
 
 
 class HttpGet(TypedDict, total=False):
@@ -68,16 +44,10 @@ class HttpGet(TypedDict, total=False):
     """Name or number of the port to access on the container."""
     host: str
     """Host name to connect to. Defaults to the pod IP."""
+    httpHeaders: List['HttpHeader']
+    """HTTP headers to set in the request."""
     scheme: Literal['HTTP', 'HTTPS']
     """Scheme to use for connecting to the host. Defaults to HTTP."""
-
-
-class HttpHeader(TypedDict, total=False):
-    """HTTP headers to set in the request."""
-    name: Required[str]
-    """Name of the header."""
-    value: Required[str]
-    """Value of the header."""
 
 
 class TcpSocket(TypedDict, total=False):
@@ -88,6 +58,28 @@ class TcpSocket(TypedDict, total=False):
     """Host name to connect to, defaults to the pod IP."""
 
 
+class Probe(TypedDict, total=False):
+    """List of probes for the container."""
+    failureThreshold: int
+    """Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3."""
+    httpGet: 'HttpGet'
+    """HTTPGet specifies the http request to perform."""
+    initialDelaySeconds: int
+    """Number of seconds after the container has started before liveness probes are initiated."""
+    periodSeconds: int
+    """How often (in seconds) to perform the probe. Default to 10 seconds."""
+    successThreshold: int
+    """Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup."""
+    tcpSocket: 'TcpSocket'
+    """TCPSocket specifies an action involving a TCP port. TCP hooks not yet supported."""
+    terminationGracePeriodSeconds: int
+    """Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is an alpha field and requires enabling ProbeTerminationGracePeriod feature gate. Maximum value is 3600 seconds (1 hour)."""
+    timeoutSeconds: int
+    """Number of seconds after which the probe times out. Defaults to 1 second."""
+    type: Literal['Liveness', 'Readiness', 'Startup']
+    """The type of probe."""
+
+
 class VolumeMount(TypedDict, total=False):
     """Container volume mounts."""
     mountPath: Required[str]
@@ -96,6 +88,26 @@ class VolumeMount(TypedDict, total=False):
     """This must match the Name of a Volume."""
     subPath: str
     """Path within the volume from which the container's volume should be mounted. Defaults to "" (volume's root)."""
+
+
+class Container(TypedDict, total=False):
+    """List of container definitions for the Container App."""
+    image: Required[str]
+    """Container image tag."""
+    resources: Required[Dict[str, object]]
+    """Container resource requirements."""
+    args: List[object]
+    """Container start command arguments."""
+    command: List[object]
+    """Container start command."""
+    env: List['Env']
+    """Container environment variables."""
+    name: str
+    """Custom container name."""
+    probes: List['Probe']
+    """List of probes for the container."""
+    volumeMounts: List['VolumeMount']
+    """Container volume mounts."""
 
 
 class AdditionalPortMapping(TypedDict, total=False):
@@ -168,16 +180,22 @@ class ServiceBind(TypedDict, total=False):
     """The service ID."""
 
 
-class ContainerApp(TypedDict, total=False):
+class AppContainerApp(TypedDict, total=False):
     """"""
+    containers: Required[List['Container']]
+    """List of container definitions for the Container App."""
     environmentResourceId: Required[str]
     """Resource ID of environment."""
     name: Required[str]
     """Name of the Container App."""
     activeRevisionsMode: Literal['Multiple', 'Single']
     """Controls how active revisions are handled for the Container app."""
+    additionalPortMappings: List['AdditionalPortMapping']
+    """Settings to expose additional ports on container app."""
     clientCertificateMode: Literal['accept', 'ignore', 'require']
     """Client certificate mode for mTLS."""
+    corsPolicy: 'CorsPolicy'
+    """Object userd to configure CORS policy."""
     customDomains: List[object]
     """Custom domain bindings for Container App hostnames."""
     dapr: Dict[str, object]
@@ -204,12 +222,18 @@ class ContainerApp(TypedDict, total=False):
     """Rules to restrict incoming IP address."""
     location: str
     """Location for all Resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     maxInactiveRevisions: int
     """Max inactive revisions a Container App can have."""
     registries: List[object]
     """Collection of private container registry credentials for containers used by the Container app."""
     revisionSuffix: str
     """User friendly suffix that is appended to the revision name."""
+    roleAssignments: List[Union['RoleAssignment', Literal['ContainerApp Reader', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     scaleMaxReplicas: int
     """Maximum number of container replicas. Defaults to 10 if not set."""
     scaleMinReplicas: int
@@ -220,6 +244,8 @@ class ContainerApp(TypedDict, total=False):
     """The secrets of the Container App."""
     service: Dict[str, object]
     """Dev ContainerApp service type."""
+    serviceBinds: List['ServiceBind']
+    """List of container app services bound to the app."""
     stickySessionsAffinity: Literal['none', 'sticky']
     """Bool indicating if the Container App should enable session affinity."""
     tags: Dict[str, object]
@@ -238,8 +264,8 @@ class ContainerApp(TypedDict, total=False):
     """Workload profile name to pin for container app execution."""
 
 
-class ContainerAppOutputs(TypedDict, total=False):
-    """Outputs for ContainerApp"""
+class AppContainerAppOutputs(TypedDict, total=False):
+    """Outputs for AppContainerApp"""
     fqdn: Output[Literal['string']]
     """The configuration of ingress fqdn."""
     location: Output[Literal['string']]
@@ -254,31 +280,28 @@ class ContainerAppOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ContainerAppBicep(Module):
-    outputs: ContainerAppOutputs
+class AppContainerAppBicep(Module):
+    outputs: AppContainerAppOutputs
 
 
-def container_app(
+def app_container_app(
         bicep: IO[str],
+        params: AppContainerApp,
         /,
         *,
-        params: ContainerApp,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.11.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'app/container-app',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ContainerAppBicep:
-    symbol = "container_app_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> AppContainerAppBicep:
+    symbol = "app_container_app_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/app/container-app:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -291,7 +314,7 @@ def container_app(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ContainerAppBicep(symbol)
+    output = AppContainerAppBicep(symbol)
     output.outputs = {
             'fqdn': Output(symbol, 'fqdn', 'string'),
             'location': Output(symbol, 'location', 'string'),

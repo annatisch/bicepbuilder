@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ....expressions import (
+from ......expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,6 +39,8 @@ class Share(TypedDict, total=False):
     """Access tier for specific share. Required if the Storage Account kind is set to FileStorage (should be set to "Premium"). GpV2 account can choose between TransactionOptimized (default), Hot, and Cool."""
     enabledProtocols: Literal['NFS', 'SMB']
     """The authentication protocol that is used for the file share. Can only be specified when creating a share."""
+    roleAssignments: List['RoleAssignment']
+    """Array of role assignments to create."""
     rootSquash: Literal['AllSquash', 'NoRootSquash', 'RootSquash']
     """Permissions for NFS file shares are enforced by the client OS rather than the Azure Files service. Toggling the root squash behavior reduces the rights of the root user for NFS shares."""
     shareQuota: int

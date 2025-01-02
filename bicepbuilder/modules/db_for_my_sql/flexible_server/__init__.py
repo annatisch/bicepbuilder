@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -53,24 +53,6 @@ class CustomerManagedKeyGeo(TypedDict, total=False):
     """User assigned identity to use when fetching the customer managed key. Required if no system assigned identity is available for use."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of the diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -87,6 +69,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of the diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -117,7 +121,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class FlexibleServer(TypedDict, total=False):
+class DbForMySqlFlexibleServer(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the MySQL flexible server."""
@@ -125,6 +129,8 @@ class FlexibleServer(TypedDict, total=False):
     """The name of the sku, typically, tier + family + cores, e.g. Standard_D4s_v3."""
     tier: Required[Literal['Burstable', 'GeneralPurpose', 'MemoryOptimized']]
     """The tier of the particular SKU. Tier must align with the "skuName" property. Example, tier cannot be "Burstable" if skuName is "Standard_D4s_v3"."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. Required if 'customerManagedKey' is not empty."""
     privateDnsZoneResourceId: str
     """Private dns zone arm resource ID. Used when the desired connectivity mode is "Private Access". Required if "delegatedSubnetResourceId" is used and the Private DNS Zone name must end with mysql.database.azure.com in order to be linked to the MySQL Flexible Server."""
     restorePointInTime: str
@@ -145,10 +151,16 @@ class FlexibleServer(TypedDict, total=False):
     """Backup retention days for the server."""
     createMode: Literal['Default', 'GeoRestore', 'PointInTimeRestore', 'Replica']
     """The mode to create a new MySQL server."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition to use for the managed service."""
+    customerManagedKeyGeo: 'CustomerManagedKeyGeo'
+    """The customer managed key definition to use when geoRedundantBackup is "Enabled"."""
     databases: List['Database']
     """The databases to create in the server."""
     delegatedSubnetResourceId: str
     """Delegated subnet arm resource ID. Used when the desired connectivity mode is "Private Access" - virtual network integration. Delegation must be enabled on the subnet for MySQL Flexible Servers and subnet CIDR size is /29."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     firewallRules: List['FirewallRule']
@@ -161,10 +173,14 @@ class FlexibleServer(TypedDict, total=False):
     """Standby availability zone information of the server. Default will have no preference set."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     maintenanceWindow: Dict[str, object]
     """Properties for the maintenence window. If provided, "customWindow" property must exist and set to "Enabled"."""
     replicationRole: Literal['None', 'Replica', 'Source']
     """The replication role."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'MySQL Backup And Export Operator', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     storageAutoIoScaling: Literal['Disabled', 'Enabled']
     """Enable IO Auto Scaling or not. The server scales IOPs up or down automatically depending on your workload needs."""
     storageIOPS: int
@@ -177,8 +193,8 @@ class FlexibleServer(TypedDict, total=False):
     """MySQL Server version."""
 
 
-class FlexibleServerOutputs(TypedDict, total=False):
-    """Outputs for FlexibleServer"""
+class DbForMySqlFlexibleServerOutputs(TypedDict, total=False):
+    """Outputs for DbForMySqlFlexibleServer"""
     fqdn: Output[Literal['string']]
     """The FQDN of the MySQL Flexible server."""
     location: Output[Literal['string']]
@@ -191,31 +207,28 @@ class FlexibleServerOutputs(TypedDict, total=False):
     """The resource ID of the deployed MySQL Flexible server."""
 
 
-class FlexibleServerBicep(Module):
-    outputs: FlexibleServerOutputs
+class DbForMySqlFlexibleServerBicep(Module):
+    outputs: DbForMySqlFlexibleServerOutputs
 
 
-def flexible_server(
+def db_for_my_sql_flexible_server(
         bicep: IO[str],
+        params: DbForMySqlFlexibleServer,
         /,
         *,
-        params: FlexibleServer,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'db-for-my-sql/flexible-server',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> FlexibleServerBicep:
-    symbol = "flexible_server_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> DbForMySqlFlexibleServerBicep:
+    symbol = "db_for_my_sql_flexible_server_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/db-for-my-sql/flexible-server:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -228,7 +241,7 @@ def flexible_server(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = FlexibleServerBicep(symbol)
+    output = DbForMySqlFlexibleServerBicep(symbol)
     output.outputs = {
             'fqdn': Output(symbol, 'fqdn', 'string'),
             'location': Output(symbol, 'location', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -26,26 +26,30 @@ class LinkedStorageAccount(TypedDict, total=False):
     """Linked storage accounts resources Ids."""
 
 
-class DataExport(TypedDict, total=False):
-    """LAW data export instances to be deployed."""
-    name: Required[str]
-    """Name of the data export."""
-    tableNames: Required[List[object]]
-    """The list of table names to export."""
-    enable: bool
-    """Enable or disable the data export."""
+class MetaData(TypedDict, total=False):
+    """The destination metadata."""
+    eventHubName: str
+    """Allows to define an Event Hub name. Not applicable when destination is Storage Account."""
 
 
 class Destination(TypedDict, total=False):
     """The destination of the data export."""
     resourceId: Required[str]
     """The destination resource ID."""
-
-
-class MetaData(TypedDict, total=False):
+    metaData: 'MetaData'
     """The destination metadata."""
-    eventHubName: str
-    """Allows to define an Event Hub name. Not applicable when destination is Storage Account."""
+
+
+class DataExport(TypedDict, total=False):
+    """LAW data export instances to be deployed."""
+    name: Required[str]
+    """Name of the data export."""
+    tableNames: Required[List[object]]
+    """The list of table names to export."""
+    destination: 'Destination'
+    """The destination of the data export."""
+    enable: bool
+    """Enable or disable the data export."""
 
 
 class DataSource(TypedDict, total=False):
@@ -80,26 +84,6 @@ class DataSource(TypedDict, total=False):
     """Tags to configure in the resource."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    useThisWorkspace: bool
-    """Instead of using an external reference, use the deployed instance as the target for its diagnostic settings. If set to """
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -118,10 +102,28 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
-class GallerySolution(TypedDict, total=False):
-    """List of gallerySolutions to be created in the log analytics workspace."""
-    name: Required[str]
-    """Name of the solution."""
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    useThisWorkspace: bool
+    """Instead of using an external reference, use the deployed instance as the target for its diagnostic settings. If set to """
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Plan(TypedDict, total=False):
@@ -132,6 +134,14 @@ class Plan(TypedDict, total=False):
     """Name of the solution to be created."""
     publisher: str
     """The publisher name of the deployed solution. For Microsoft published gallery solution, it is """
+
+
+class GallerySolution(TypedDict, total=False):
+    """List of gallerySolutions to be created in the log analytics workspace."""
+    name: Required[str]
+    """Name of the solution."""
+    plan: Required['Plan']
+    """Plan for solution object supported by the OperationsManagement resource provider."""
 
 
 class LinkedService(TypedDict, total=False):
@@ -212,18 +222,6 @@ class StorageInsightsConfig(TypedDict, total=False):
     """List of tables to be read by the workspace."""
 
 
-class Table(TypedDict, total=False):
-    """LAW custom tables to be deployed."""
-    name: Required[str]
-    """The name of the table."""
-    plan: str
-    """The plan for the table."""
-    retentionInDays: int
-    """The retention in days for the table."""
-    totalRetentionInDays: int
-    """The total retention in days for the table."""
-
-
 class RestoredLog(TypedDict, total=False):
     """The restored logs for the table."""
     endRestoreTime: str
@@ -254,16 +252,6 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Schema(TypedDict, total=False):
-    """The schema for the table."""
-    name: Required[str]
-    """The table name."""
-    description: str
-    """The table description."""
-    displayName: str
-    """The table display name."""
-
-
 class Column(TypedDict, total=False):
     """A list of table custom columns."""
     name: Required[str]
@@ -276,6 +264,18 @@ class Column(TypedDict, total=False):
     """The column description."""
     displayName: str
     """Column display name."""
+
+
+class Schema(TypedDict, total=False):
+    """The schema for the table."""
+    columns: Required[List['Column']]
+    """A list of table custom columns."""
+    name: Required[str]
+    """The table name."""
+    description: str
+    """The table description."""
+    displayName: str
+    """The table display name."""
 
 
 class SearchResult(TypedDict, total=False):
@@ -292,38 +292,82 @@ class SearchResult(TypedDict, total=False):
     """The timestamp to start the search from (UTC)."""
 
 
-class Workspace(TypedDict, total=False):
+class Table(TypedDict, total=False):
+    """LAW custom tables to be deployed."""
+    name: Required[str]
+    """The name of the table."""
+    plan: str
+    """The plan for the table."""
+    restoredLogs: 'RestoredLog'
+    """The restored logs for the table."""
+    retentionInDays: int
+    """The retention in days for the table."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Log Analytics Contributor', 'Log Analytics Reader', 'Monitoring Contributor', 'Monitoring Reader', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """The role assignments for the table."""
+    schema: 'Schema'
+    """The schema for the table."""
+    searchResults: 'SearchResult'
+    """The search results for the table."""
+    totalRetentionInDays: int
+    """The total retention in days for the table."""
+
+
+class OperationalInsightsWorkspace(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Log Analytics workspace."""
+    linkedStorageAccounts: List['LinkedStorageAccount']
+    """List of Storage Accounts to be linked. Required if 'forceCmkForQuery' is set to 'true' and 'savedSearches' is not empty."""
     dailyQuotaGb: int
     """The workspace daily quota for ingestion."""
+    dataExports: List['DataExport']
+    """LAW data export instances to be deployed."""
     dataRetention: int
     """Number of days data will be retained for."""
+    dataSources: List['DataSource']
+    """LAW data sources to configure."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     forceCmkForQuery: bool
     """Indicates whether customer managed storage is mandatory for query management."""
+    gallerySolutions: List['GallerySolution']
+    """List of gallerySolutions to be created in the log analytics workspace."""
+    linkedServices: List['LinkedService']
+    """List of services to be linked."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource. Only one type of identity is supported: system-assigned or user-assigned, but not both."""
     onboardWorkspaceToSentinel: bool
     """Onboard the Log Analytics Workspace to Sentinel. Requires 'SecurityInsights' solution to be in gallerySolutions."""
     publicNetworkAccessForIngestion: Literal['Disabled', 'Enabled']
     """The network access type for accessing Log Analytics ingestion."""
     publicNetworkAccessForQuery: Literal['Disabled', 'Enabled']
     """The network access type for accessing Log Analytics query."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Log Analytics Contributor', 'Log Analytics Reader', 'Monitoring Contributor', 'Monitoring Reader', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'Security Admin', 'Security Reader', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    savedSearches: List['SavedSearche']
+    """Kusto Query Language searches to save."""
     skuCapacityReservationLevel: int
     """The capacity reservation level in GB for this workspace, when CapacityReservation sku is selected. Must be in increments of 100 between 100 and 5000."""
     skuName: Literal['CapacityReservation', 'Free', 'LACluster', 'PerGB2018', 'PerNode', 'Premium', 'Standalone', 'Standard']
     """The name of the SKU."""
+    storageInsightsConfigs: List['StorageInsightsConfig']
+    """List of storage accounts to be read by the workspace."""
+    tables: List['Table']
+    """LAW custom tables to be deployed."""
     tags: Dict[str, object]
     """Tags of the resource."""
     useResourcePermissions: bool
     """Set to 'true' to use resource or workspace permissions and 'false' (or leave empty) to require workspace permissions."""
 
 
-class WorkspaceOutputs(TypedDict, total=False):
-    """Outputs for Workspace"""
+class OperationalInsightsWorkspaceOutputs(TypedDict, total=False):
+    """Outputs for OperationalInsightsWorkspace"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     logAnalyticsWorkspaceId: Output[Literal['string']]
@@ -338,31 +382,28 @@ class WorkspaceOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class WorkspaceBicep(Module):
-    outputs: WorkspaceOutputs
+class OperationalInsightsWorkspaceBicep(Module):
+    outputs: OperationalInsightsWorkspaceOutputs
 
 
-def workspace(
+def operational_insights_workspace(
         bicep: IO[str],
+        params: OperationalInsightsWorkspace,
         /,
         *,
-        params: Workspace,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.9.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'operational-insights/workspace',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> WorkspaceBicep:
-    symbol = "workspace_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> OperationalInsightsWorkspaceBicep:
+    symbol = "operational_insights_workspace_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/operational-insights/workspace:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -375,7 +416,7 @@ def workspace(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = WorkspaceBicep(symbol)
+    output = OperationalInsightsWorkspaceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'logAnalyticsWorkspaceId': Output(symbol, 'logAnalyticsWorkspaceId', 'string'),

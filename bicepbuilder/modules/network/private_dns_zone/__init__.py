@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,16 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class A(TypedDict, total=False):
-    """Array of A records."""
-    name: Required[str]
-    """The name of the record."""
-    metadata: Dict[str, object]
-    """The metadata of the record."""
-    ttl: int
-    """The TTL of the record."""
 
 
 class ARecord(TypedDict, total=False):
@@ -54,12 +44,16 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Aaaa(TypedDict, total=False):
-    """Array of AAAA records."""
+class A(TypedDict, total=False):
+    """Array of A records."""
     name: Required[str]
     """The name of the record."""
+    aRecords: List['ARecord']
+    """The list of A records in the record set."""
     metadata: Dict[str, object]
     """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ttl: int
     """The TTL of the record."""
 
@@ -90,12 +84,16 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Cname(TypedDict, total=False):
-    """Array of CNAME records."""
+class Aaaa(TypedDict, total=False):
+    """Array of AAAA records."""
     name: Required[str]
     """The name of the record."""
+    aaaaRecords: List['AaaaRecord']
+    """The list of AAAA records in the record set."""
     metadata: Dict[str, object]
     """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ttl: int
     """The TTL of the record."""
 
@@ -126,22 +124,26 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
+class Cname(TypedDict, total=False):
+    """Array of CNAME records."""
+    name: Required[str]
+    """The name of the record."""
+    cnameRecord: 'CnameRecord'
+    """The CNAME record in the record set."""
+    metadata: Dict[str, object]
+    """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    ttl: int
+    """The TTL of the record."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class Mx(TypedDict, total=False):
-    """Array of MX records."""
-    name: Required[str]
-    """The name of the record."""
-    metadata: Dict[str, object]
-    """The metadata of the record."""
-    ttl: int
-    """The TTL of the record."""
 
 
 class MxRecord(TypedDict, total=False):
@@ -172,12 +174,16 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Ptr(TypedDict, total=False):
-    """Array of PTR records."""
+class Mx(TypedDict, total=False):
+    """Array of MX records."""
     name: Required[str]
     """The name of the record."""
     metadata: Dict[str, object]
     """The metadata of the record."""
+    mxRecords: List['MxRecord']
+    """The list of MX records in the record set."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     ttl: int
     """The TTL of the record."""
 
@@ -208,6 +214,20 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
+class Ptr(TypedDict, total=False):
+    """Array of PTR records."""
+    name: Required[str]
+    """The name of the record."""
+    metadata: Dict[str, object]
+    """The metadata of the record."""
+    ptrRecords: List['PtrRecord']
+    """The list of PTR records in the record set."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    ttl: int
+    """The TTL of the record."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -226,16 +246,6 @@ class RoleAssignment(TypedDict, total=False):
     """The name (as GUID) of the role assignment. If not provided, a GUID will be generated."""
     principalType: Literal['Device', 'ForeignGroup', 'Group', 'ServicePrincipal', 'User']
     """The principal type of the assigned principal ID."""
-
-
-class Soa(TypedDict, total=False):
-    """Array of SOA records."""
-    name: Required[str]
-    """The name of the record."""
-    metadata: Dict[str, object]
-    """The metadata of the record."""
-    ttl: int
-    """The TTL of the record."""
 
 
 class RoleAssignment(TypedDict, total=False):
@@ -276,12 +286,16 @@ class SoaRecord(TypedDict, total=False):
     """The serial number for this SOA record."""
 
 
-class Srv(TypedDict, total=False):
-    """Array of SRV records."""
+class Soa(TypedDict, total=False):
+    """Array of SOA records."""
     name: Required[str]
     """The name of the record."""
     metadata: Dict[str, object]
     """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    soaRecord: 'SoaRecord'
+    """The SOA record in the record set."""
     ttl: int
     """The TTL of the record."""
 
@@ -318,12 +332,16 @@ class SrvRecord(TypedDict, total=False):
     """The weight value for this SRV record."""
 
 
-class Txt(TypedDict, total=False):
-    """Array of TXT records."""
+class Srv(TypedDict, total=False):
+    """Array of SRV records."""
     name: Required[str]
     """The name of the record."""
     metadata: Dict[str, object]
     """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    srvRecords: List['SrvRecord']
+    """The list of SRV records in the record set."""
     ttl: int
     """The TTL of the record."""
 
@@ -354,6 +372,20 @@ class TxtRecord(TypedDict, total=False):
     """The text value of this TXT record."""
 
 
+class Txt(TypedDict, total=False):
+    """Array of TXT records."""
+    name: Required[str]
+    """The name of the record."""
+    metadata: Dict[str, object]
+    """The metadata of the record."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Private DNS Zone Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
+    ttl: int
+    """The TTL of the record."""
+    txtRecords: List['TxtRecord']
+    """The list of TXT records in the record set."""
+
+
 class VirtualNetworkLink(TypedDict, total=False):
     """Array of custom objects describing vNet links of the DNS zone. Each object should contain properties 'virtualNetworkResourceId' and 'registrationEnabled'. The 'vnetResourceId' is a resource ID of a vNet to link, 'registrationEnabled' (bool) enables automatic DNS registration in the zone for the linked vNet."""
     virtualNetworkResourceId: Required[str]
@@ -370,20 +402,42 @@ class VirtualNetworkLink(TypedDict, total=False):
     """Resource tags."""
 
 
-class PrivateDnsZone(TypedDict, total=False):
+class NetworkPrivateDnsZone(TypedDict, total=False):
     """"""
     name: Required[str]
     """Private DNS zone name."""
+    a: List['A']
+    """Array of A records."""
+    aaaa: List['Aaaa']
+    """Array of AAAA records."""
+    cname: List['Cname']
+    """Array of CNAME records."""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
     location: str
     """The location of the PrivateDNSZone. Should be global."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    mx: List['Mx']
+    """Array of MX records."""
+    ptr: List['Ptr']
+    """Array of PTR records."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator']]]
+    """Array of role assignments to create."""
+    soa: List['Soa']
+    """Array of SOA records."""
+    srv: List['Srv']
+    """Array of SRV records."""
     tags: Dict[str, object]
     """Tags of the resource."""
+    txt: List['Txt']
+    """Array of TXT records."""
+    virtualNetworkLinks: List['VirtualNetworkLink']
+    """Array of custom objects describing vNet links of the DNS zone. Each object should contain properties 'virtualNetworkResourceId' and 'registrationEnabled'. The 'vnetResourceId' is a resource ID of a vNet to link, 'registrationEnabled' (bool) enables automatic DNS registration in the zone for the linked vNet."""
 
 
-class PrivateDnsZoneOutputs(TypedDict, total=False):
-    """Outputs for PrivateDnsZone"""
+class NetworkPrivateDnsZoneOutputs(TypedDict, total=False):
+    """Outputs for NetworkPrivateDnsZone"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -394,31 +448,28 @@ class PrivateDnsZoneOutputs(TypedDict, total=False):
     """The resource ID of the private DNS zone."""
 
 
-class PrivateDnsZoneBicep(Module):
-    outputs: PrivateDnsZoneOutputs
+class NetworkPrivateDnsZoneBicep(Module):
+    outputs: NetworkPrivateDnsZoneOutputs
 
 
-def private_dns_zone(
+def network_private_dns_zone(
         bicep: IO[str],
+        params: NetworkPrivateDnsZone,
         /,
         *,
-        params: PrivateDnsZone,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.7.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/private-dns-zone',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> PrivateDnsZoneBicep:
-    symbol = "private_dns_zone_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkPrivateDnsZoneBicep:
+    symbol = "network_private_dns_zone_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/private-dns-zone:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -431,7 +482,7 @@ def private_dns_zone(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = PrivateDnsZoneBicep(symbol)
+    output = NetworkPrivateDnsZoneBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

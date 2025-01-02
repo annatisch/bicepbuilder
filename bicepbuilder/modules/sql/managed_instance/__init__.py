@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -20,24 +20,6 @@ from ..expressions import (
 if TYPE_CHECKING:
     from .database import Database
     from .key import Key
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -56,6 +38,28 @@ class MetricCategory(TypedDict, total=False):
     """Name of a Diagnostic Metric category for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -92,7 +96,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class ManagedInstance(TypedDict, total=False):
+class SqlManagedInstance(TypedDict, total=False):
     """"""
     administratorLogin: Required[str]
     """The username used to establish jumpbox VMs."""
@@ -110,6 +114,8 @@ class ManagedInstance(TypedDict, total=False):
     """Collation of the managed instance."""
     databases: List['Database']
     """Databases to create in this server."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     dnsZonePartner: str
     """The resource ID of another managed instance whose DNS zone this managed instance will share after creation."""
     enableTelemetry: bool
@@ -126,6 +132,10 @@ class ManagedInstance(TypedDict, total=False):
     """The license type. Possible values are 'LicenseIncluded' (regular price inclusive of a new SQL license) and 'BasePrice' (discounted AHB price for bringing your own SQL licenses)."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     managedInstanceCreateMode: Literal['Default', 'PointInTimeRestore']
     """Specifies the mode of database creation. Default: Regular instance creation. Restore: Creates an instance by restoring a set of backups to specific point in time. RestorePointInTime and SourceManagedInstanceId must be specified."""
     minimalTlsVersion: Literal['1.0', '1.1', '1.2', 'None']
@@ -138,6 +148,8 @@ class ManagedInstance(TypedDict, total=False):
     """The storage account type used to store backups for this database."""
     restorePointInTime: str
     """Specifies the point in time (ISO8601 format) of the source database that will be restored to create the new database."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Reservation Purchaser', 'Role Based Access Control Administrator (Preview)', 'SQL DB Contributor', 'SQL Managed Instance Contributor', 'SQL Security Manager', 'SQL Server Contributor', 'SqlDb Migration Role', 'SqlMI Migration Role', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     securityAlertPoliciesObj: Dict[str, object]
     """The security alert policy configuration."""
     servicePrincipal: Literal['None', 'SystemAssigned']
@@ -162,8 +174,8 @@ class ManagedInstance(TypedDict, total=False):
     """Whether or not multi-az is enabled."""
 
 
-class ManagedInstanceOutputs(TypedDict, total=False):
-    """Outputs for ManagedInstance"""
+class SqlManagedInstanceOutputs(TypedDict, total=False):
+    """Outputs for SqlManagedInstance"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -176,31 +188,28 @@ class ManagedInstanceOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class ManagedInstanceBicep(Module):
-    outputs: ManagedInstanceOutputs
+class SqlManagedInstanceBicep(Module):
+    outputs: SqlManagedInstanceOutputs
 
 
-def managed_instance(
+def sql_managed_instance(
         bicep: IO[str],
+        params: SqlManagedInstance,
         /,
         *,
-        params: ManagedInstance,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'sql/managed-instance',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> ManagedInstanceBicep:
-    symbol = "managed_instance_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> SqlManagedInstanceBicep:
+    symbol = "sql_managed_instance_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/sql/managed-instance:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -213,7 +222,7 @@ def managed_instance(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = ManagedInstanceBicep(symbol)
+    output = SqlManagedInstanceBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

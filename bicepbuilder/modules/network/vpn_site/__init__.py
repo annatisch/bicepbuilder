@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -46,7 +46,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class VpnSite(TypedDict, total=False):
+class NetworkVpnSite(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the VPN Site."""
@@ -66,16 +66,20 @@ class VpnSite(TypedDict, total=False):
     """IsSecuritySite flag."""
     location: str
     """Location where all resources will be created."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     o365Policy: Dict[str, object]
     """The Office365 breakout policy."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Network Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     tags: Dict[str, object]
     """Tags of the resource."""
     vpnSiteLinks: List[object]
     """List of all VPN site links."""
 
 
-class VpnSiteOutputs(TypedDict, total=False):
-    """Outputs for VpnSite"""
+class NetworkVpnSiteOutputs(TypedDict, total=False):
+    """Outputs for NetworkVpnSite"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -86,31 +90,28 @@ class VpnSiteOutputs(TypedDict, total=False):
     """The resource ID of the VPN site."""
 
 
-class VpnSiteBicep(Module):
-    outputs: VpnSiteOutputs
+class NetworkVpnSiteBicep(Module):
+    outputs: NetworkVpnSiteOutputs
 
 
-def vpn_site(
+def network_vpn_site(
         bicep: IO[str],
+        params: NetworkVpnSite,
         /,
         *,
-        params: VpnSite,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.3.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/vpn-site',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> VpnSiteBicep:
-    symbol = "vpn_site_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkVpnSiteBicep:
+    symbol = "network_vpn_site_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/vpn-site:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -123,7 +124,7 @@ def vpn_site(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = VpnSiteBicep(symbol)
+    output = NetworkVpnSiteBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

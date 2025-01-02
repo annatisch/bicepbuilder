@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,12 +9,6 @@ from ...expressions import (
     Deployment,
     Output,
 )
-
-
-class Metadata(TypedDict, total=False):
-    """User metadata for the connection."""
-    >Any_other_property<: Required[str]
-    """The metadata key-value pairs."""
 
 
 class Connection(TypedDict, total=False):
@@ -38,6 +25,8 @@ class Connection(TypedDict, total=False):
     """The expiry time of the connection."""
     isSharedToAll: bool
     """Indicates whether the connection is shared to all users in the workspace."""
+    metadata: Dict[str, object]
+    """User metadata for the connection."""
     sharedUserList: List[object]
     """The shared user list of the connection."""
     value: str

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -36,7 +36,7 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
-class DiagnosticSetting(TypedDict, total=False):
+class InsightsDiagnosticSetting(TypedDict, total=False):
     """"""
     enableTelemetry: bool
     """Enable/Disable usage telemetry for module."""
@@ -48,8 +48,12 @@ class DiagnosticSetting(TypedDict, total=False):
     """Location deployment metadata."""
     logAnalyticsDestinationType: Literal['', 'AzureDiagnostics', 'Dedicated']
     """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     marketplacePartnerResourceId: str
     """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     name: str
     """Name of the Diagnostic settings."""
     storageAccountResourceId: str
@@ -58,8 +62,8 @@ class DiagnosticSetting(TypedDict, total=False):
     """Resource ID of the diagnostic log analytics workspace."""
 
 
-class DiagnosticSettingOutputs(TypedDict, total=False):
-    """Outputs for DiagnosticSetting"""
+class InsightsDiagnosticSettingOutputs(TypedDict, total=False):
+    """Outputs for InsightsDiagnosticSetting"""
     name: Output[Literal['string']]
     """The name of the diagnostic settings."""
     resourceId: Output[Literal['string']]
@@ -68,31 +72,28 @@ class DiagnosticSettingOutputs(TypedDict, total=False):
     """The name of the subscription to deploy into."""
 
 
-class DiagnosticSettingBicep(Module):
-    outputs: DiagnosticSettingOutputs
+class InsightsDiagnosticSettingBicep(Module):
+    outputs: InsightsDiagnosticSettingOutputs
 
 
-def diagnostic_setting(
+def insights_diagnostic_setting(
         bicep: IO[str],
+        params: InsightsDiagnosticSetting,
         /,
         *,
-        params: DiagnosticSetting,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'insights/diagnostic-setting',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> DiagnosticSettingBicep:
-    symbol = "diagnostic_setting_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> InsightsDiagnosticSettingBicep:
+    symbol = "insights_diagnostic_setting_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/insights/diagnostic-setting:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -105,7 +106,7 @@ def diagnostic_setting(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = DiagnosticSettingBicep(symbol)
+    output = InsightsDiagnosticSettingBicep(symbol)
     output.outputs = {
             'name': Output(symbol, 'name', 'string'),
             'resourceId': Output(symbol, 'resourceId', 'string'),

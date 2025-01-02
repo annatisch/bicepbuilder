@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -36,24 +36,6 @@ class CustomerManagedKey(TypedDict, total=False):
     """User assigned identity to use when fetching the customer managed key. Required if no system assigned identity is available for use."""
 
 
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
 class LogCategoriesAndGroup(TypedDict, total=False):
     """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
     category: str
@@ -72,6 +54,28 @@ class MetricCategory(TypedDict, total=False):
     """Enable or disable the category explicitly. Default is """
 
 
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    metricCategories: List['MetricCategory']
+    """The name of metrics that will be streamed. "allMetrics" includes all possible metrics for the resource. Set to """
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+
+
 class Lock(TypedDict, total=False):
     """The lock settings of the service."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
@@ -88,46 +92,12 @@ class ManagedIdentity(TypedDict, total=False):
     """The resource ID(s) to assign to the resource."""
 
 
-class PrivateEndpoint(TypedDict, total=False):
-    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
-    subnetResourceId: Required[str]
-    """Resource ID of the subnet where the endpoint needs to be created."""
-    applicationSecurityGroupResourceIds: List[object]
-    """Application security groups in which the private endpoint IP configuration is included."""
-    customNetworkInterfaceName: str
-    """The custom name of the network interface attached to the private endpoint."""
-    enableTelemetry: bool
-    """Enable/Disable usage telemetry for module."""
-    isManualConnection: bool
-    """If Manual Private Link Connection is required."""
-    location: str
-    """The location to deploy the private endpoint to."""
-    manualConnectionRequestMessage: str
-    """A message passed to the owner of the remote resource with the manual connection request."""
-    name: str
-    """The name of the private endpoint."""
-    privateLinkServiceConnectionName: str
-    """The name of the private link connection to create."""
-    resourceGroupName: str
-    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
-    service: str
-    """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
-    tags: Dict[str, object]
-    """Tags to be applied on all resources/resource groups in this deployment."""
-
-
 class CustomDnsConfig(TypedDict, total=False):
     """Custom DNS configurations."""
     ipAddresses: Required[List[object]]
     """A list of private IP addresses of the private endpoint."""
     fqdn: str
     """FQDN that resolves to private endpoint IP address."""
-
-
-class IpConfiguration(TypedDict, total=False):
-    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
-    name: Required[str]
-    """The name of the resource that is unique within a resource group."""
 
 
 class IpConfigurationProperties(TypedDict, total=False):
@@ -140,18 +110,20 @@ class IpConfigurationProperties(TypedDict, total=False):
     """A private IP address obtained from the private endpoint's subnet."""
 
 
+class IpConfiguration(TypedDict, total=False):
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    name: Required[str]
+    """The name of the resource that is unique within a resource group."""
+    properties: Required['IpConfigurationProperties']
+    """Properties of private endpoint IP configurations."""
+
+
 class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     kind: Literal['CanNotDelete', 'None', 'ReadOnly']
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class PrivateDnsZoneGroup(TypedDict, total=False):
-    """The private DNS zone group to configure for the private endpoint."""
-    name: str
-    """The name of the Private DNS Zone Group."""
 
 
 class PrivateDnsZoneGroupConfig(TypedDict, total=False):
@@ -162,6 +134,14 @@ class PrivateDnsZoneGroupConfig(TypedDict, total=False):
     """The name of the private DNS zone group config."""
 
 
+class PrivateDnsZoneGroup(TypedDict, total=False):
+    """The private DNS zone group to configure for the private endpoint."""
+    privateDnsZoneGroupConfigs: Required[List['PrivateDnsZoneGroupConfig']]
+    """The private DNS zone groups to associate the private endpoint. A DNS zone group can support up to 5 DNS zones."""
+    name: str
+    """The name of the Private DNS Zone Group."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -182,6 +162,44 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
+class PrivateEndpoint(TypedDict, total=False):
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
+    subnetResourceId: Required[str]
+    """Resource ID of the subnet where the endpoint needs to be created."""
+    applicationSecurityGroupResourceIds: List[object]
+    """Application security groups in which the private endpoint IP configuration is included."""
+    customDnsConfigs: List['CustomDnsConfig']
+    """Custom DNS configurations."""
+    customNetworkInterfaceName: str
+    """The custom name of the network interface attached to the private endpoint."""
+    enableTelemetry: bool
+    """Enable/Disable usage telemetry for module."""
+    ipConfigurations: List['IpConfiguration']
+    """A list of IP configurations of the private endpoint. This will be used to map to the First Party Service endpoints."""
+    isManualConnection: bool
+    """If Manual Private Link Connection is required."""
+    location: str
+    """The location to deploy the private endpoint to."""
+    lock: 'Lock'
+    """Specify the type of lock."""
+    manualConnectionRequestMessage: str
+    """A message passed to the owner of the remote resource with the manual connection request."""
+    name: str
+    """The name of the private endpoint."""
+    privateDnsZoneGroup: 'PrivateDnsZoneGroup'
+    """The private DNS zone group to configure for the private endpoint."""
+    privateLinkServiceConnectionName: str
+    """The name of the private link connection to create."""
+    resourceGroupName: str
+    """Specify if you want to deploy the Private Endpoint into a different resource group than the main resource."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'DNS Resolver Contributor', 'DNS Zone Contributor', 'Domain Services Contributor', 'Domain Services Reader', 'Network Contributor', 'Owner', 'Private DNS Zone Contributor', 'Reader', 'Role Based Access Control Administrator (Preview)']]]
+    """Array of role assignments to create."""
+    service: str
+    """The subresource to deploy the private endpoint for. For example "vault", "mysqlServer" or "dataFactory"."""
+    tags: Dict[str, object]
+    """Tags to be applied on all resources/resource groups in this deployment."""
+
+
 class RoleAssignment(TypedDict, total=False):
     """Array of role assignments to create."""
     principalId: Required[str]
@@ -202,12 +220,16 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class Namespace(TypedDict, total=False):
+class EventHubNamespace(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the event hub namespace."""
     authorizationRules: List['AuthorizationRule']
     """Authorization Rules for the Event Hub namespace."""
+    customerManagedKey: 'CustomerManagedKey'
+    """The customer managed key definition."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableLocalAuth: bool
     """This property disables SAS authentication for the Event Hubs namespace."""
     disasterRecoveryConfig: 'DisasterRecoveryConfig'
@@ -222,16 +244,24 @@ class Namespace(TypedDict, total=False):
     """Value that indicates whether Kafka is enabled for Event Hubs Namespace."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
+    managedIdentities: 'ManagedIdentity'
+    """The managed identity definition for this resource."""
     maximumThroughputUnits: int
     """Upper limit of throughput units when AutoInflate is enabled, value should be within 0 to 20 throughput units."""
     minimumTlsVersion: Literal['1.0', '1.1', '1.2']
     """The minimum TLS version for the cluster to support."""
     networkRuleSets: 'NetworkRuleSet'
     """Configure networking options. This object contains IPs/Subnets to allow or restrict access to private endpoints only. For security reasons, it is recommended to configure this object on the Namespace."""
+    privateEndpoints: List['PrivateEndpoint']
+    """Configuration details for private endpoints. For security reasons, it is recommended to use private endpoints whenever possible."""
     publicNetworkAccess: Literal['', 'Disabled', 'Enabled', 'SecuredByPerimeter']
     """Whether or not public network access is allowed for this resource. For security reasons it should be disabled. If not specified, it will be disabled by default if private endpoints are set."""
     requireInfrastructureEncryption: bool
     """Enable infrastructure encryption (double encryption). Note, this setting requires the configuration of Customer-Managed-Keys (CMK) via the corresponding module parameters."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Azure Event Hubs Data Owner', 'Azure Event Hubs Data Receiver', 'Azure Event Hubs Data Sender', 'Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     skuCapacity: int
     """The Event Hub's throughput units for Basic or Standard tiers, where value should be 0 to 20 throughput units. The Event Hubs premium units for Premium tier, where value should be 0 to 10 premium units."""
     skuName: Literal['Basic', 'Premium', 'Standard']
@@ -242,8 +272,8 @@ class Namespace(TypedDict, total=False):
     """Switch to make the Event Hub Namespace zone redundant."""
 
 
-class NamespaceOutputs(TypedDict, total=False):
-    """Outputs for Namespace"""
+class EventHubNamespaceOutputs(TypedDict, total=False):
+    """Outputs for EventHubNamespace"""
     eventHubResourceIds: Output[Literal['array']]
     """The Resources IDs of the EventHubs within this eventspace."""
     location: Output[Literal['string']]
@@ -260,31 +290,28 @@ class NamespaceOutputs(TypedDict, total=False):
     """The principal ID of the system assigned identity."""
 
 
-class NamespaceBicep(Module):
-    outputs: NamespaceOutputs
+class EventHubNamespaceBicep(Module):
+    outputs: EventHubNamespaceOutputs
 
 
-def namespace(
+def event_hub_namespace(
         bicep: IO[str],
+        params: EventHubNamespace,
         /,
         *,
-        params: Namespace,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.7.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'event-hub/namespace',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> NamespaceBicep:
-    symbol = "namespace_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> EventHubNamespaceBicep:
+    symbol = "event_hub_namespace_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/event-hub/namespace:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -297,7 +324,7 @@ def namespace(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = NamespaceBicep(symbol)
+    output = EventHubNamespaceBicep(symbol)
     output.outputs = {
             'eventHubResourceIds': Output(symbol, 'eventHubResourceIds', 'array'),
             'location': Output(symbol, 'location', 'string'),

@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -24,10 +24,6 @@ class Lock(TypedDict, total=False):
     """Specify the type of lock."""
     name: str
     """Specify the name of lock."""
-
-
-class VnetRoutesStaticRoute(TypedDict, total=False):
-    """The routes from the virtual hub to virtual network connections."""
 
 
 class StaticRoute(TypedDict, total=False):
@@ -46,7 +42,15 @@ class StaticRoutesConfig(TypedDict, total=False):
     """Determines whether the NVA in a SPOKE VNET is bypassed for traffic with destination in spoke."""
 
 
-class P2SVpnGateway(TypedDict, total=False):
+class VnetRoutesStaticRoute(TypedDict, total=False):
+    """The routes from the virtual hub to virtual network connections."""
+    staticRoutes: List['StaticRoute']
+    """The static route configuration for the P2S VPN Gateway."""
+    staticRoutesConfig: 'StaticRoutesConfig'
+    """The static route configuration for the P2S VPN Gateway."""
+
+
+class NetworkP2SVpnGateway(TypedDict, total=False):
     """"""
     name: Required[str]
     """The name of the P2S VPN Gateway."""
@@ -66,6 +70,8 @@ class P2SVpnGateway(TypedDict, total=False):
     """The routing preference for the P2S VPN Gateway, Internet or Microsoft network."""
     location: str
     """Location where all resources will be created."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     outboundRouteMapResourceId: str
     """The Resource ID of the outbound route map."""
     p2SConnectionConfigurationsName: str
@@ -76,6 +82,8 @@ class P2SVpnGateway(TypedDict, total=False):
     """The names of the route tables to propagate to the P2S VPN Gateway."""
     tags: Dict[str, object]
     """Tags of the resource."""
+    vnetRoutesStaticRoutes: 'VnetRoutesStaticRoute'
+    """The routes from the virtual hub to virtual network connections."""
     vpnClientAddressPoolAddressPrefixes: List[object]
     """The address prefixes for the VPN Client Address Pool."""
     vpnGatewayScaleUnit: int
@@ -84,8 +92,8 @@ class P2SVpnGateway(TypedDict, total=False):
     """The resource ID of the VPN Server Configuration."""
 
 
-class P2SVpnGatewayOutputs(TypedDict, total=False):
-    """Outputs for P2SVpnGateway"""
+class NetworkP2SVpnGatewayOutputs(TypedDict, total=False):
+    """Outputs for NetworkP2SVpnGateway"""
     location: Output[Literal['string']]
     """The location the resource was deployed into."""
     name: Output[Literal['string']]
@@ -96,31 +104,28 @@ class P2SVpnGatewayOutputs(TypedDict, total=False):
     """The resource ID of the user VPN configuration."""
 
 
-class P2SVpnGatewayBicep(Module):
-    outputs: P2SVpnGatewayOutputs
+class NetworkP2SVpnGatewayBicep(Module):
+    outputs: NetworkP2SVpnGatewayOutputs
 
 
-def p2s_vpn_gateway(
+def network_p2s_vpn_gateway(
         bicep: IO[str],
+        params: NetworkP2SVpnGateway,
         /,
         *,
-        params: P2SVpnGateway,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.1.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/p2s-vpn-gateway',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> P2SVpnGatewayBicep:
-    symbol = "p2s_vpn_gateway_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkP2SVpnGatewayBicep:
+    symbol = "network_p2s_vpn_gateway_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/p2s-vpn-gateway:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -133,7 +138,7 @@ def p2s_vpn_gateway(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = P2SVpnGatewayBicep(symbol)
+    output = NetworkP2SVpnGatewayBicep(symbol)
     output.outputs = {
             'location': Output(symbol, 'location', 'string'),
             'name': Output(symbol, 'name', 'string'),

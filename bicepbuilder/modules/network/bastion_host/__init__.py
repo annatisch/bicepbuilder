@@ -1,14 +1,14 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from .._utils import (
+from ...._utils import (
     generate_suffix,
     resolve_value,
     resolve_key,
     serialize_dict,
     serialize_list,
 )
-from ..expressions import (
+from ....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,24 +16,6 @@ from ..expressions import (
     Deployment,
     Output,
 )
-
-
-class DiagnosticSetting(TypedDict, total=False):
-    """The diagnostic settings of the service."""
-    eventHubAuthorizationRuleResourceId: str
-    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
-    eventHubName: str
-    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
-    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
-    marketplacePartnerResourceId: str
-    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
-    name: str
-    """The name of diagnostic setting."""
-    storageAccountResourceId: str
-    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-    workspaceResourceId: str
-    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class LogCategoriesAndGroup(TypedDict, total=False):
@@ -44,6 +26,26 @@ class LogCategoriesAndGroup(TypedDict, total=False):
     """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to """
     enabled: bool
     """Enable or disable the category explicitly. Default is """
+
+
+class DiagnosticSetting(TypedDict, total=False):
+    """The diagnostic settings of the service."""
+    eventHubAuthorizationRuleResourceId: str
+    """Resource ID of the diagnostic event hub authorization rule for the Event Hubs namespace in which the event hub should be created or streamed to."""
+    eventHubName: str
+    """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
+    """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to """
+    marketplacePartnerResourceId: str
+    """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
+    name: str
+    """The name of diagnostic setting."""
+    storageAccountResourceId: str
+    """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
+    workspaceResourceId: str
+    """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
 
 
 class Lock(TypedDict, total=False):
@@ -74,7 +76,7 @@ class RoleAssignment(TypedDict, total=False):
     """The principal type of the assigned principal ID."""
 
 
-class BastionHost(TypedDict, total=False):
+class NetworkBastionHost(TypedDict, total=False):
     """"""
     name: Required[str]
     """Name of the Azure Bastion resource."""
@@ -82,6 +84,8 @@ class BastionHost(TypedDict, total=False):
     """Shared services Virtual Network resource Id."""
     bastionSubnetPublicIpResourceId: str
     """The Public IP resource ID to associate to the azureBastionSubnet. If empty, then the Public IP that is created as part of this module will be applied to the azureBastionSubnet. This parameter is ignored when enablePrivateOnlyBastion is true."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     disableCopyPaste: bool
     """Choose to disable or enable Copy Paste. For Basic SKU Copy/Paste is always enabled."""
     enableFileCopy: bool
@@ -100,8 +104,12 @@ class BastionHost(TypedDict, total=False):
     """Enable/Disable usage telemetry for module."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     publicIPAddressObject: Dict[str, object]
     """Specifies the properties of the Public IP to create and be used by Azure Bastion, if no existing public IP was provided. This parameter is ignored when enablePrivateOnlyBastion is true."""
+    roleAssignments: List[Union['RoleAssignment', Literal['Contributor', 'Owner', 'Reader', 'Role Based Access Control Administrator', 'User Access Administrator']]]
+    """Array of role assignments to create."""
     scaleUnits: int
     """The scale units for the Bastion Host resource. The Basic SKU only supports 2 scale units."""
     skuName: Literal['Basic', 'Premium', 'Standard']
@@ -112,8 +120,8 @@ class BastionHost(TypedDict, total=False):
     """A list of availability zones denoting where the Bastion Host resource needs to come from."""
 
 
-class BastionHostOutputs(TypedDict, total=False):
-    """Outputs for BastionHost"""
+class NetworkBastionHostOutputs(TypedDict, total=False):
+    """Outputs for NetworkBastionHost"""
     ipConfAzureBastionSubnet: Output[Literal['object']]
     """The Public IPconfiguration object for the AzureBastionSubnet."""
     location: Output[Literal['string']]
@@ -126,31 +134,28 @@ class BastionHostOutputs(TypedDict, total=False):
     """The resource ID the Azure Bastion."""
 
 
-class BastionHostBicep(Module):
-    outputs: BastionHostOutputs
+class NetworkBastionHostBicep(Module):
+    outputs: NetworkBastionHostOutputs
 
 
-def bastion_host(
+def network_bastion_host(
         bicep: IO[str],
+        params: NetworkBastionHost,
         /,
         *,
-        params: BastionHost,
         scope: Optional[BicepExpression] = None,
         depends_on: Optional[Union[str, BicepExpression]] = None,
-        name: Optional[Union[str, BicepExpression]] = None,
         tag: str = '0.5.0',
-        registry_prefix: str = 'br/public:avm/res',
-        path: str = 'network/bastion-host',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> BastionHostBicep:
-    symbol = "bastion_host_" + generate_suffix()
-    name = name or Deployment().name.format(suffix="_" + symbol)
+) -> NetworkBastionHostBicep:
+    symbol = "network_bastion_host_" + generate_suffix()
+    name = Deployment().name.format(suffix="_" + symbol)
     if description:
         bicep.write(f"@description('{description}')\n")
     if batch_size:
         bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} '{registry_prefix}/{path}:{tag}' = {{\n")
+    bicep.write(f"module {symbol} 'br/public:avm/res/network/bastion-host:{tag}' = {{\n")
     bicep.write(f"  name: {resolve_value(name)}\n")
     if scope is not None:
         bicep.write(f"  scope: {resolve_value(scope)}\n")
@@ -163,7 +168,7 @@ def bastion_host(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
-    output = BastionHostBicep(symbol)
+    output = NetworkBastionHostBicep(symbol)
     output.outputs = {
             'ipConfAzureBastionSubnet': Output(symbol, 'ipConfAzureBastionSubnet', 'object'),
             'location': Output(symbol, 'location', 'string'),

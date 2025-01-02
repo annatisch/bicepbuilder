@@ -1,14 +1,7 @@
 from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
 from typing_extensions import Required
 
-from ..._utils import (
-    generate_suffix,
-    resolve_value,
-    resolve_key,
-    serialize_dict,
-    serialize_list,
-)
-from ...expressions import (
+from .....expressions import (
     BicepExpression,
     Module,
     ResourceId,
@@ -16,6 +9,14 @@ from ...expressions import (
     Deployment,
     Output,
 )
+
+
+class LogCategoriesAndGroup(TypedDict, total=False):
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
+    category: str
+    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
+    categoryGroup: str
+    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to 'AllLogs' to collect all logs."""
 
 
 class DiagnosticSetting(TypedDict, total=False):
@@ -26,6 +27,8 @@ class DiagnosticSetting(TypedDict, total=False):
     """Name of the diagnostic event hub within the namespace to which logs are streamed. Without this, an event hub is created for each log category. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     logAnalyticsDestinationType: Literal['AzureDiagnostics', 'Dedicated']
     """A string indicating whether the export to Log Analytics should use the default destination type, i.e. AzureDiagnostics, or use a destination type."""
+    logCategoriesAndGroups: List['LogCategoriesAndGroup']
+    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
     marketplacePartnerResourceId: str
     """The full ARM resource ID of the Marketplace resource to which you would like to send Diagnostic Logs."""
     name: str
@@ -34,14 +37,6 @@ class DiagnosticSetting(TypedDict, total=False):
     """Resource ID of the diagnostic storage account. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
     workspaceResourceId: str
     """Resource ID of the diagnostic log analytics workspace. For security reasons, it is recommended to set diagnostic settings to send data to either storage account, log analytics workspace or event hub."""
-
-
-class LogCategoriesAndGroup(TypedDict, total=False):
-    """The name of logs that will be streamed. "allLogs" includes all possible logs for the resource. Set to '' to disable log collection."""
-    category: str
-    """Name of a Diagnostic Log category for a resource type this setting is applied to. Set the specific logs to collect here."""
-    categoryGroup: str
-    """Name of a Diagnostic Log category group for a resource type this setting is applied to. Set to 'AllLogs' to collect all logs."""
 
 
 class Lock(TypedDict, total=False):
@@ -78,8 +73,12 @@ class Database(TypedDict, total=False):
     """Collation of the managed instance database."""
     createMode: Literal['Default', 'PointInTimeRestore', 'Recovery', 'RestoreExternalBackup', 'RestoreLongTermRetentionBackup']
     """Managed database create mode. PointInTimeRestore: Create a database by restoring a point in time backup of an existing database. SourceDatabaseName, SourceManagedInstanceName and PointInTime must be specified. RestoreExternalBackup: Create a database by restoring from external backup files. Collation, StorageContainerUri and StorageContainerSasToken must be specified. Recovery: Creates a database by restoring a geo-replicated backup. RecoverableDatabaseId must be specified as the recoverable database resource ID to restore. RestoreLongTermRetentionBackup: Create a database by restoring from a long term retention backup (longTermRetentionBackupResourceId required)."""
+    diagnosticSettings: List['DiagnosticSetting']
+    """The diagnostic settings of the service."""
     location: str
     """Location for all resources."""
+    lock: 'Lock'
+    """The lock settings of the service."""
     restorableDroppedDatabaseId: str
     """The restorable dropped database resource ID to restore when creating this database."""
     tags: Dict[str, object]
