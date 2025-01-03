@@ -76,8 +76,8 @@ class Outputs(MarkdownNode):
     def format(self) -> str:
         outputs_str = "{\n"
         for name, type, _ in self.outputs:
-            outputs_str += f"            '{name}': Output(symbol, '{name}', '{type}'),\n"
-        outputs_str += "        }\n"
+            outputs_str += f"        '{name}': Output(symbol, '{name}', '{type}'),\n"
+        outputs_str += "    }\n"
         return outputs_str
 
     def add(self, node):

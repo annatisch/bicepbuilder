@@ -1,16 +1,9 @@
-from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
+from typing import TYPE_CHECKING, TypedDict, Literal, List, Dict, Union
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    serialize_dict,
-    serialize_list,
-)
 from ....expressions import (
     BicepExpression,
     Module,
-    Deployment,
     Output,
 )
 
@@ -226,44 +219,3 @@ class DevOpsInfrastructurePoolOutputs(TypedDict, total=False):
 class DevOpsInfrastructurePoolModule(Module):
     outputs: DevOpsInfrastructurePoolOutputs
 
-
-def _dev_ops_infrastructure_pool(
-        bicep: IO[str],
-        params: DevOpsInfrastructurePool,
-        /,
-        *,
-        scope: Optional[BicepExpression] = None,
-        depends_on: Optional[Union[str, BicepExpression]] = None,
-        tag: str = '0.3.0',
-        batch_size: Optional[int] = None,
-        description: Optional[str] = None,
-) -> DevOpsInfrastructurePoolModule:
-    symbol = "dev_ops_infrastructure_pool_" + generate_suffix()
-    name = Deployment().name.format(suffix="_" + symbol)
-    if description:
-        bicep.write(f"@description('{description}')\n")
-    if batch_size:
-        bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} 'br/public:avm/res/dev-ops-infrastructure/pool:{tag}' = {{\n")
-    bicep.write(f"  name: {resolve_value(name)}\n")
-    if scope is not None:
-        bicep.write(f"  scope: {resolve_value(scope)}\n")
-    bicep.write(f"  params: {{\n")
-    
-    serialize_dict(bicep, params, indent="    ")
-    bicep.write(f"  }}\n")
-    if depends_on:
-        bicep.write(f"  dependsOn: [\n")
-        serialize_list(bicep, depends_on, indent="    ")
-        bicep.write(f"  ]\n")
-    bicep.write(f"}}\n")
-    output = DevOpsInfrastructurePoolModule(symbol)
-    output.outputs = {
-            'location': Output(symbol, 'location', 'string'),
-            'name': Output(symbol, 'name', 'string'),
-            'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
-            'resourceId': Output(symbol, 'resourceId', 'string'),
-            'systemAssignedMIPrincipalId': Output(symbol, 'systemAssignedMIPrincipalId', 'string'),
-        }
-
-    return output

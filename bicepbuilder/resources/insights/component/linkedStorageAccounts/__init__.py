@@ -30,7 +30,7 @@ class LinkedstorageaccountModule(Module):
 
 def _linkedStorageAccounts(
         bicep: IO[str],
-        params: Linkedstorageaccount,
+        params: 'Linkedstorageaccount',
         /,
         *,
         app_insights_name: Union[str, BicepExpression],
@@ -39,7 +39,7 @@ def _linkedStorageAccounts(
         tag: str = '0.2.0',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> LinkedstorageaccountModule:
+) -> 'LinkedstorageaccountModule':
     symbol = "linkedStorageAccounts_" + generate_suffix()
     name = Deployment().name.format(suffix="_" + symbol)
     if description:
@@ -59,11 +59,13 @@ def _linkedStorageAccounts(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
+
+    from .insights/component import LinkedstorageaccountModule
     output = LinkedstorageaccountModule(symbol)
     output.outputs = {
-            'name': Output(symbol, 'name', 'string'),
-            'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
-            'resourceId': Output(symbol, 'resourceId', 'string'),
-        }
+        'name': Output(symbol, 'name', 'string'),
+        'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
+        'resourceId': Output(symbol, 'resourceId', 'string'),
+    }
 
     return output

@@ -1,7 +1,9 @@
+from typing import TYPE_CHECKING
 
 from bicepbuilder import infra
 from bicepbuilder.expressions import ResourceGroup, Take, UnionString, UniqueString, Subscription
-from bicepbuilder.resources import StorageAccount, ServiceBusNamespace
+if TYPE_CHECKING:
+    from bicepbuilder.resources import StorageAccount, ServiceBusNamespace
 
 with infra() as deployment:
     env_name = deployment.param(
@@ -46,7 +48,7 @@ with infra() as deployment:
             location=location
         )
 
-        storage_params: StorageAccount = {
+        storage_params: 'StorageAccount' = {
             "skuName": "Premium_LRS",
             "name": cm_id.format(prefix="antisch"),
             "location": location,
@@ -89,7 +91,7 @@ with infra() as deployment:
         }
         storage = cloudmachine_module.add("storage_account", storage_params)
 
-        servicebus_params: ServiceBusNamespace = {
+        servicebus_params: 'ServiceBusNamespace' = {
             "name": cm_id.format(prefix="antisch"),
             "location": location,
             "tags": tags,

@@ -6,7 +6,7 @@ import os
 
 import marko
 
-from ._nodes import MarkdownNode, BicepObject
+from ._nodes import BicepObject
 from ._utils import (
     class_name,
     combined_module_name,
@@ -17,7 +17,7 @@ from ._utils import (
 _MODULE_TEMPLATE = """
 def _{module_name}(
         bicep: IO[str],
-        params: {resource_name},
+        params: '{resource_name}',
         /,
         *,
         {params}scope: Optional[BicepExpression] = None,
@@ -25,7 +25,7 @@ def _{module_name}(
         tag: str = '{module_version}',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> {resource_name}Module:
+) -> '{resource_name}Module':
     symbol = "{module_name}_" + generate_suffix()
     name = Deployment().name.format(suffix="_" + symbol)
     if description:
@@ -45,6 +45,8 @@ def _{module_name}(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\\n")
     bicep.write(f"}}}}\\n")
+
+    from .{namespace} import {resource_name}Module
     output = {resource_name}Module(symbol)
     output.outputs = {outputs}
     return output
@@ -54,7 +56,7 @@ _OVERLOAD_TEMPLATE = """
     def add(
             self,
             resource: Literal['{module_name}'],
-            params: {resource_name},
+            params: '{resource_name}',
             /,
             *,
             scope: Optional[BicepExpression] = None,
@@ -62,32 +64,45 @@ _OVERLOAD_TEMPLATE = """
             tag: str = '{module_version}',
             batch_size: Optional[int] = None,
             description: Optional[str] = None,
-    ) -> {resource_name}Module:
+    ) -> '{resource_name}Module':
+        \"\"\"Deploy {resource_name} resource.
+
+        :param resource: The name of the resource to deploy: '{module_name}'
+        :paramtype resource: ~typing.Literal['{module_name}']
+        :param params: The properties of the {module_name} resource.
+        :paramtype params: ~bicepbuilder.resources.{namespace}.{resource_name}
+        :keyword scope: The scope of the deployed resource. Defaults to the scope of the module.
+        :paramtype scope: ~typing.Optional[~bicepbuilder.expressions.BicepExpression]
+        :keyword depends_on: Any previous deployments that must be complete before this one can start.
+        :paramtype depends_on: ~typing.Optional[~typing.Union[str, ~bicepbuilder.expressions.BicepExpression]]
+        :keyword str tag: The public repo version of this module that will be used. Defaults to '{module_version}'.
+        :keyword batch_size: The level of concurrency allowed for the deployment of this module.
+        :paramtype batch_size: ~typing.Optional[int]
+        :keyword description: A description to add to the bicep for this module.
+        :paramtype description: ~typing.Optional[str]
+        :returns: The module reference for the {resource_name} resource.
+        :rtype: ~bicepbuilder.resources.{namespace}.{resource_name}Module
+        \"\"\"
         ...
 """
 def write_resource_module(
         pymodule: IO[str],
+        funcs: List[str],
         overloads: List[str],
         *,
         resource: BicepObject,
         typed_objects: List[BicepObject],
         module_name: str,
+        namespace: str,
         module_reference: str,
         module_version: str,
         relative_import: str
 ) -> Optional[str]:
-    pymodule.write("from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional\n")
+    pymodule.write("from typing import TYPE_CHECKING, TypedDict, Literal, List, Dict, Union\n")
     pymodule.write("from typing_extensions import Required\n\n")
-    pymodule.write(f"from {relative_import}._utils import (\n")
-    pymodule.write("    generate_suffix,\n")
-    pymodule.write("    resolve_value,\n")
-    pymodule.write("    serialize_dict,\n")
-    pymodule.write("    serialize_list,\n")
-    pymodule.write(")\n")
     pymodule.write(f"from {relative_import}.expressions import (\n")
     pymodule.write("    BicepExpression,\n")
     pymodule.write("    Module,\n")
-    pymodule.write("    Deployment,\n")
     pymodule.write("    Output,\n")
     pymodule.write(")\n\n")
     if resource.imports:
@@ -111,11 +126,12 @@ def write_resource_module(
     else:
         pymodule.write(f"    outputs: Dict[str, Output]\n")
     pymodule.write("\n")  
-    pymodule.write(_MODULE_TEMPLATE.format(
+    funcs.append(_MODULE_TEMPLATE.format(
         module_name=module_name,
         resource_name=resource.name,
         params="",
         bicep_params="",
+        namespace=namespace,
         module_reference=module_reference,
         module_version=module_version,
         outputs=resource.outputs.format() if resource.outputs else "{}")
@@ -123,7 +139,8 @@ def write_resource_module(
     overloads.append(_OVERLOAD_TEMPLATE.format(
         module_name=module_name,
         resource_name=resource.name,
-        module_version=module_version
+        module_version=module_version,
+        namespace=namespace
     ))
     return module_name
 
@@ -133,6 +150,7 @@ def write_pymodule(
         resource: BicepObject,
         typed_objects: List[BicepObject],
         module_name: str,
+        namespace: str,
         module_reference: str,
         module_version: str,
         relative_import: str
@@ -180,6 +198,7 @@ def write_pymodule(
         resource_name=resource.name,
         params=func_params,
         bicep_params=bicep_params,
+        namespace=namespace,
         module_reference=module_reference,
         module_version=module_version,
         outputs=resource.outputs.format() if resource.outputs else "{}")
@@ -245,6 +264,7 @@ def subresources_from_dirs(
                 typed_objects=objects,
                 module_name=output_dirname,
                 module_reference=f"{base}/{subdirname}",
+                namespace=base,
                 module_version=version,
                 relative_import=dir_level
             )
@@ -255,7 +275,8 @@ def parse_resources(
         name: str,
         reference: str,
         root_dir: str,
-        root_output_dir: str, 
+        root_output_dir: str,
+        funcs: List[str],
         overloads: List[str],
 ) -> Dict[str, Tuple[str, str, str]]:
     imports = {}
@@ -298,17 +319,19 @@ def parse_resources(
                 resource.add(child)
             objects = resource.close()
             objects.append(resource)
-            imports[module_name] = [combined_module, resource_name, resource_name + "Module"]
+            imports[module_name] = [resource_name, resource_name + "Module"]
 
         if not os.path.isdir(output_dir):
             os.makedirs(output_dir)
         with open(os.path.join(output_dir, "__init__.py"), 'w') as pymodule:
             write_resource_module(
                 pymodule,
+                funcs,
                 overloads,
                 resource=resource,
                 typed_objects=objects,
                 module_name=combined_module,
+                namespace=f"{name}.{module_name}",
                 module_reference=f"{reference}/{dirname}",
                 module_version=version,
                 relative_import="..."
@@ -332,7 +355,7 @@ def run() -> None:
         os.makedirs(output_dir)
 
     all_imports = []
-    dunder_all = []
+    all_functions = []
     overloads = []
     for basename in os.listdir(cwd):
         basedir = os.path.join(cwd, basename)
@@ -346,25 +369,35 @@ def run() -> None:
             reference=basename,
             root_dir=basedir,
             root_output_dir=module_output_dir,
+            funcs=all_functions,
             overloads=overloads
         )
-        for key, (funcname, objname, bicepname) in imports.items():
+        for key, (inputname, resultname) in imports.items():
             all_imports.append(
-                f"from .{module_name}.{key} import _{funcname}, {objname}, {bicepname}\n"
+                f"    from .{module_name}.{key} import {inputname}, {resultname}\n"
             )
-            dunder_all.extend([objname, bicepname])
 
     all_modules_init = os.path.join(output_dir, "__init__.py")
     with open(all_modules_init, 'w') as initfile:
-        initfile.write("from typing import overload, Literal, Optional, Union, IO, Dict, Any\n\n")
-        initfile.write("from ..expressions import BicepExpression, Module\n\n")
+        initfile.write("from typing import overload, Literal, Optional, Union, IO, Dict, Any, TYPE_CHECKING\n\n")
+        initfile.write(f"from .._utils import (\n")
+        initfile.write("    generate_suffix,\n")
+        initfile.write("    resolve_value,\n")
+        initfile.write("    serialize_dict,\n")
+        initfile.write("    serialize_list,\n")
+        initfile.write(")\n")
+        initfile.write(f"from ..expressions import (\n")
+        initfile.write("    BicepExpression,\n")
+        initfile.write("    Module,\n")
+        initfile.write("    Deployment,\n")
+        initfile.write("    Output,\n")
+        initfile.write(")\n\n")
+        initfile.write("if TYPE_CHECKING:\n")
         for import_statement in all_imports:
             initfile.write(import_statement)
-        initfile.write("\n")
-        initfile.write("__all__ = [\n")
-        for imported in dunder_all:
-            initfile.write(f"    '{imported}'\n")
-        initfile.write("]\n\n")
+        initfile.write("\n\n")
+        for func in all_functions:
+            initfile.write(func)
         initfile.write("class _AddResourceMixin:\n")
         initfile.write("    bicep: IO[str]\n")
         for overload in overloads:

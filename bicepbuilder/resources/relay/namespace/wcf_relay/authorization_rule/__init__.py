@@ -32,7 +32,7 @@ class AuthorizationRuleModule(Module):
 
 def _authorization_rule(
         bicep: IO[str],
-        params: AuthorizationRule,
+        params: 'AuthorizationRule',
         /,
         *,
         namespace_name: Union[str, BicepExpression],
@@ -42,7 +42,7 @@ def _authorization_rule(
         tag: str = '0.2.0',
         batch_size: Optional[int] = None,
         description: Optional[str] = None,
-) -> AuthorizationRuleModule:
+) -> 'AuthorizationRuleModule':
     symbol = "authorization_rule_" + generate_suffix()
     name = Deployment().name.format(suffix="_" + symbol)
     if description:
@@ -62,11 +62,13 @@ def _authorization_rule(
         serialize_list(bicep, depends_on, indent="    ")
         bicep.write(f"  ]\n")
     bicep.write(f"}}\n")
+
+    from .relay/namespace/wcf-relay import AuthorizationRuleModule
     output = AuthorizationRuleModule(symbol)
     output.outputs = {
-            'name': Output(symbol, 'name', 'string'),
-            'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
-            'resourceId': Output(symbol, 'resourceId', 'string'),
-        }
+        'name': Output(symbol, 'name', 'string'),
+        'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
+        'resourceId': Output(symbol, 'resourceId', 'string'),
+    }
 
     return output

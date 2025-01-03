@@ -1,16 +1,9 @@
-from typing import TYPE_CHECKING, IO, TypedDict, Literal, List, Dict, Union, Optional
+from typing import TYPE_CHECKING, TypedDict, Literal, List, Dict, Union
 from typing_extensions import Required
 
-from ...._utils import (
-    generate_suffix,
-    resolve_value,
-    serialize_dict,
-    serialize_list,
-)
 from ....expressions import (
     BicepExpression,
     Module,
-    Deployment,
     Output,
 )
 
@@ -320,48 +313,3 @@ class ContainerRegistryOutputs(TypedDict, total=False):
 class ContainerRegistryModule(Module):
     outputs: ContainerRegistryOutputs
 
-
-def _container_registry(
-        bicep: IO[str],
-        params: ContainerRegistry,
-        /,
-        *,
-        scope: Optional[BicepExpression] = None,
-        depends_on: Optional[Union[str, BicepExpression]] = None,
-        tag: str = '0.6.0',
-        batch_size: Optional[int] = None,
-        description: Optional[str] = None,
-) -> ContainerRegistryModule:
-    symbol = "container_registry_" + generate_suffix()
-    name = Deployment().name.format(suffix="_" + symbol)
-    if description:
-        bicep.write(f"@description('{description}')\n")
-    if batch_size:
-        bicep.write(f"@batchSize({batch_size})\n")
-    bicep.write(f"module {symbol} 'br/public:avm/res/container-registry/registry:{tag}' = {{\n")
-    bicep.write(f"  name: {resolve_value(name)}\n")
-    if scope is not None:
-        bicep.write(f"  scope: {resolve_value(scope)}\n")
-    bicep.write(f"  params: {{\n")
-    
-    serialize_dict(bicep, params, indent="    ")
-    bicep.write(f"  }}\n")
-    if depends_on:
-        bicep.write(f"  dependsOn: [\n")
-        serialize_list(bicep, depends_on, indent="    ")
-        bicep.write(f"  ]\n")
-    bicep.write(f"}}\n")
-    output = ContainerRegistryModule(symbol)
-    output.outputs = {
-            'credentialSetsResourceIds': Output(symbol, 'credentialSetsResourceIds', 'array'),
-            'credentialSetsSystemAssignedMIPrincipalIds': Output(symbol, 'credentialSetsSystemAssignedMIPrincipalIds', 'array'),
-            'location': Output(symbol, 'location', 'string'),
-            'loginServer': Output(symbol, 'loginServer', 'string'),
-            'name': Output(symbol, 'name', 'string'),
-            'privateEndpoints': Output(symbol, 'privateEndpoints', 'array'),
-            'resourceGroupName': Output(symbol, 'resourceGroupName', 'string'),
-            'resourceId': Output(symbol, 'resourceId', 'string'),
-            'systemAssignedMIPrincipalId': Output(symbol, 'systemAssignedMIPrincipalId', 'string'),
-        }
-
-    return output
