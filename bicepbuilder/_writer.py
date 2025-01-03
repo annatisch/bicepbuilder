@@ -4,10 +4,10 @@ import json
 
 from ._utils import generate_suffix, resolve_value, serialize, serialize_dict, serialize_list
 from .expressions import BicepExpression, BicepParam, Deployment, Identity, Module, Output, PrincipalId, Resource, ResourceGroup, ResourceId, ResourceName
-from .modules import AddResourceMixin
+from .resources import _AddResourceMixin
 
 
-class BicepWriter(AddResourceMixin):
+class BicepWriter(_AddResourceMixin):
     bicep: IO[str]
 
     def __init__(

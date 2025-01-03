@@ -4,8 +4,7 @@ import json
 
 from ._utils import serialize
 from ._writer import BicepWriter
-from .expressions import BicepExpression, Subscription, Module, ResourceGroup
-from .modules import ResourceGroup as ResourceGroupParams
+from .expressions import BicepExpression, Subscription, ResourceGroup
 
 
 class infra(BicepWriter):

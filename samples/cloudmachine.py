@@ -1,6 +1,7 @@
+
 from bicepbuilder import infra
-from bicepbuilder.expressions import ResourceGroup, Take, UnionString, UniqueString, Subscription, Union
-from bicepbuilder.modules import StorageAccount, ServiceBusNamespace
+from bicepbuilder.expressions import ResourceGroup, Take, UnionString, UniqueString, Subscription
+from bicepbuilder.resources import StorageAccount, ServiceBusNamespace
 
 with infra() as deployment:
     env_name = deployment.param(
